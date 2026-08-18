@@ -48,11 +48,17 @@
                 </td>
                 <td>{{ a.job_title }}</td>
                 <td>
-                    {% set m = a.match_score or 0 %}
-                    <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}%</span>
-                    <div style="font-size:11px;color:var(--color-text-muted);margin-top:3px;">
-                        {{ 'Passed baseline' if a.passed_ats else ('Below ' ~ a.min_match_score ~ '% baseline') }}
-                    </div>
+                    {% if a.screening_status in ('pending', 'processing') %}
+                        <span class="match-badge mid">Scoring…</span>
+                    {% elif a.screening_status == 'failed' %}
+                        <span class="match-badge low">Scoring failed</span>
+                    {% else %}
+                        {% set m = a.match_score or 0 %}
+                        <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}%</span>
+                        <div style="font-size:11px;color:var(--color-text-muted);margin-top:3px;">
+                            {{ 'Passed baseline' if a.passed_ats else ('Below ' ~ a.min_match_score ~ '% baseline') }}
+                        </div>
+                    {% endif %}
                 </td>
                 <td style="font-size:11.5px;color:var(--color-text-muted);line-height:1.7;">
                     Technical: <strong>{{ a.technical_match_score if a.technical_match_score is not none else '—' }}</strong><br>
