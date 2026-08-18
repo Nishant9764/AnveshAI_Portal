@@ -365,22 +365,14 @@ def register_routes(app):
             return redirect(url_for("candidate_applications"))
 
         resume_choice = request.form.get("resume_choice")  # "existing" or "upload"
-        parsed = None
         resume_id = None
-        experience_yrs = 0
+        skills_for_session = []
 
-        # Reuse the JD skills already parsed once at job-posting time —
-        # never re-parse the same JD text on every application. Only trust
-        # the cache if it actually has content (older jobs created before
-        # this fix, or a failed parse at posting time, leave it empty —
-        # fall back to parsing once here rather than scoring against
-        # nothing).
-        cached_jd_skills = None
-        cached_required = job.get("jd_required_skills") or []
-        cached_preferred = job.get("jd_preferred_skills") or []
-        if cached_required or cached_preferred:
-            cached_jd_skills = {"required_skills": cached_required, "preferred_skills": cached_preferred}
-
+        # Everything in this block is FAST (no Gemini call) — local
+        # regex-based parsing only — so the candidate isn't kept waiting
+        # for it. The actual JD-match scoring (a real network round-trip
+        # to Gemini) happens in a background job below, after we've
+        # already responded.
         try:
             if resume_choice == "existing":
                 resume_id = int(request.form.get("resume_id", 0) or 0)
@@ -389,8 +381,7 @@ def register_routes(app):
                     flash("Please select a valid resume.", "error")
                     return redirect(url_for("apply_to_job_page", job_id=job_id))
                 parsed = resume_bank.as_parsed_dict(resume_row)
-                experience_yrs = resume_row.get("experience_yrs") or 0
-                screen = ats_engine.screen_parsed_resume(parsed, job["description"], jd_skills=cached_jd_skills)
+                skills_for_session = parsed.get("skills", [])
             else:
                 file = request.files.get("resume")
                 if not file or not file.filename or not allowed_file(file.filename, app):
@@ -399,58 +390,119 @@ def register_routes(app):
                 filename = secure_filename(f"user{user_id}_{int(datetime.now().timestamp())}_{file.filename}")
                 file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 file.save(file_path)
+
                 with open(file_path, "rb") as f:
-                    screen = ats_engine.screen_application(f, job["description"], jd_skills=cached_jd_skills)
+                    raw_text = resume_parser.extract_text_from_pdf(f)
+                if not raw_text or not raw_text.strip():
+                    flash("Couldn't read that resume file — please try another.", "error")
+                    return redirect(url_for("apply_to_job_page", job_id=job_id))
+                parsed_resume = resume_parser.process_resume(raw_text)
                 resume_parsed_for_save = {
-                    "masked_resume": screen["_resume_masked_text"],
-                    "skills": screen["_resume_skills"],
-                    "experience": screen["_resume_experience"],
-                    "projects": screen["_resume_projects"],
-                    "name_found": screen["_resume_name_found"],
-                    "raw_text": screen.get("_resume_raw_text", ""),
+                    "masked_resume": parsed_resume["masked_resume"],
+                    "skills": parsed_resume["skills"],
+                    "experience": parsed_resume["experience"],
+                    "projects": parsed_resume["projects"],
+                    "name_found": parsed_resume["name_found"],
+                    "raw_text": raw_text,
                 }
                 resume_id = resume_bank.save(user_id, filename, file_path, resume_parsed_for_save)
+                skills_for_session = parsed_resume["skills"]
                 # keep candidate_profiles.tech_stack fresh too, for feed personalization
-                if screen["_resume_skills"]:
+                if skills_for_session:
                     db.execute(
                         "UPDATE candidate_profiles SET tech_stack=%s WHERE user_id=%s",
-                        (", ".join(screen["_resume_skills"]), user_id),
+                        (", ".join(skills_for_session), user_id),
                     )
-        except ValueError as e:
-            flash(str(e), "error")
-            return redirect(url_for("apply_to_job_page", job_id=job_id))
         except Exception as e:
-            print(f"ATS screening error: {e}")
-            flash("We couldn't process that resume right now. Please try again.", "error")
+            print(f"Resume parsing error: {e}")
+            flash("We couldn't read that resume right now. Please try again.", "error")
             return redirect(url_for("apply_to_job_page", job_id=job_id))
 
         application_id = db.execute(
-            """INSERT INTO applications
-               (job_id, candidate_id, match_score, resume_id, technical_match_score,
-                experience_match_score, soft_skills_score, impact_score,
-                matched_skills, missing_skills, red_flags, ats_summary, passed_ats)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
-            (job_id, user_id, screen["ats_score"], resume_id,
-             screen["technical_match_score"], screen["experience_match_score"],
+            """INSERT INTO applications (job_id, candidate_id, resume_id, screening_status)
+               VALUES (%s,%s,%s,'pending') RETURNING id""",
+            (job_id, user_id, resume_id),
+        )
+
+        bg_scheduler.run_in_background(_process_application_screening, application_id)
+
+        flash(
+            "Application submitted! We're scoring your resume against this job now — "
+            "your match score will show up on My Applications in a moment.",
+            "success",
+        )
+        return redirect(url_for("candidate_applications"))
+
+    def _process_application_screening(application_id):
+        """Runs on a background thread (see scheduler.run_in_background),
+        AFTER the candidate has already gotten their 'Application
+        submitted!' response. This is where the actual Gemini network
+        call happens, so it never blocks the request."""
+        db.execute("UPDATE applications SET screening_status='processing' WHERE id=%s", (application_id,))
+
+        row = db.query_one(
+            """SELECT a.*, u.id AS candidate_id, u.full_name, u.email,
+                      j.id AS job_id, j.title, j.company_name, j.description,
+                      j.min_match_score, j.test_trigger_mode,
+                      j.jd_required_skills, j.jd_preferred_skills
+               FROM applications a
+               JOIN users u ON u.id = a.candidate_id
+               JOIN jobs j ON j.id = a.job_id
+               WHERE a.id=%s""",
+            (application_id,),
+        )
+        if not row:
+            return
+
+        resume_row = db.query_one("SELECT * FROM resumes WHERE id=%s", (row["resume_id"],))
+        if not resume_row:
+            db.execute(
+                "UPDATE applications SET screening_status='failed', screening_error=%s WHERE id=%s",
+                ("Resume record not found", application_id),
+            )
+            return
+
+        parsed = resume_bank.as_parsed_dict(resume_row)
+        cached_required = row.get("jd_required_skills") or []
+        cached_preferred = row.get("jd_preferred_skills") or []
+        cached_jd_skills = {"required_skills": cached_required, "preferred_skills": cached_preferred} \
+            if (cached_required or cached_preferred) else None
+
+        try:
+            screen = ats_engine.screen_parsed_resume(parsed, row["description"], jd_skills=cached_jd_skills)
+        except Exception as e:
+            print(f"ATS screening error (application {application_id}): {e}")
+            db.execute(
+                "UPDATE applications SET screening_status='failed', screening_error=%s WHERE id=%s",
+                (str(e), application_id),
+            )
+            return
+
+        db.execute(
+            """UPDATE applications
+               SET match_score=%s, technical_match_score=%s, experience_match_score=%s,
+                   soft_skills_score=%s, impact_score=%s, matched_skills=%s, missing_skills=%s,
+                   red_flags=%s, ats_summary=%s, passed_ats=%s, screening_status='done'
+               WHERE id=%s""",
+            (screen["ats_score"], screen["technical_match_score"], screen["experience_match_score"],
              screen["soft_skills_score"], screen["impact_score"],
              json.dumps(screen["matched_skills"]), json.dumps(screen["missing_skills"]),
              json.dumps(screen["red_flags"]), screen["ats_summary"],
-             screen["ats_score"] >= (job.get("min_match_score") or 60)),
+             screen["ats_score"] >= (row.get("min_match_score") or 60),
+             application_id),
         )
 
-        candidate = db.query_one("SELECT id, full_name, email FROM users WHERE id=%s", (user_id,))
-        skills_for_session = screen.get("_resume_skills") or (parsed.get("skills") if parsed else [])
-        _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id=resume_id,
-                               experience_yrs=experience_yrs, skills=skills_for_session)
+        job = {
+            "id": row["job_id"], "title": row["title"], "company_name": row["company_name"],
+            "description": row["description"], "min_match_score": row["min_match_score"],
+            "test_trigger_mode": row["test_trigger_mode"],
+        }
+        candidate = {"id": row["candidate_id"], "full_name": row["full_name"], "email": row["email"]}
+        skills_for_session = parsed.get("skills", [])
+        _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id=row["resume_id"],
+                               skills=skills_for_session)
 
-        if screen["ats_score"] >= (job.get("min_match_score") or 60):
-            flash(f"Application submitted! Your resume-JD match score is {screen['ats_score']}%.", "success")
-        else:
-            flash(f"Application submitted. Your match score ({screen['ats_score']}%) was below this "
-                  f"role's threshold, so you won't move forward this time — check your email.", "info")
-        return redirect(url_for("candidate_applications"))
-
-    def _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id, experience_yrs, skills):
+    def _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id, skills):
         """Implements the employer's configured pipeline once ATS scoring
         is done: instant rejection if below baseline, otherwise a Round 1
         session is created and the invite is sent immediately / scheduled
