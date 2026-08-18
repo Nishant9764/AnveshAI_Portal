@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}ResumeVault — Round 1 Assessment{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --bg: #0c0d0f; --surface: #14161a; --surface2: #1a1d23;
+        --border: #252830; --border2: #2e3340;
+        --accent: #00e5a0; --accent2: #0070f3; --accent3: #f59e0b;
+        --redact: #ff4d6d; --text: #e8eaf0; --muted: #6b7280;
+        --mono: "Space Mono", monospace; --sans: "DM Sans", sans-serif;
+      }
+      body {
+        background: var(--bg); color: var(--text); font-family: var(--sans);
+        min-height: 100vh; padding: 40px 20px 80px;
+        background-image: radial-gradient(ellipse 60% 40% at 10% 5%, rgba(0,229,160,0.05) 0%, transparent 60%),
+          radial-gradient(ellipse 50% 50% at 90% 95%, rgba(0,112,243,0.06) 0%, transparent 60%);
+      }
+      .page-header {
+        max-width: 760px; margin: 0 auto 28px; display: flex;
+        align-items: center; justify-content: space-between; gap: 16px;
+      }
+      .brand { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+      .brand strong { color: var(--accent); }
+      .progress-pill {
+        font-family: var(--mono); font-size: 11px; color: var(--muted);
+        border: 1px solid var(--border); border-radius: 20px; padding: 6px 14px;
+      }
+      .container { max-width: 760px; margin: 0 auto; }
+      .card {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: 14px; padding: 30px; animation: fadeUp 0.4s ease both;
+      }
+      .btn {
+        font-family: var(--mono); font-size: 13px; letter-spacing: 0.5px;
+        background: var(--accent); color: #06120d; border: none;
+        border-radius: 8px; padding: 13px 26px; cursor: pointer;
+        transition: transform 0.15s, box-shadow 0.15s;
+      }
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,229,160,0.25); }
+      .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+      .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border2); }
+      .flash {
+        background: rgba(255,77,109,0.08); border: 1px solid rgba(255,77,109,0.25);
+        color: var(--redact); border-radius: 10px; padding: 14px 18px;
+        font-size: 13px; margin-bottom: 20px;
+      }
+      label { font-size: 13px; color: var(--text); display: block; margin-bottom: 8px; }
+      textarea, select {
+        width: 100%; background: var(--surface2); border: 1px solid var(--border);
+        border-radius: 8px; padding: 12px 14px; color: var(--text);
+        font-family: var(--sans); font-size: 13.5px;
+      }
+      textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+      textarea { resize: vertical; min-height: 140px; }
+      .timer {
+        font-family: var(--mono); font-size: 13px; color: var(--accent3);
+        text-align: right; margin-bottom: 12px;
+      }
+      .timer.urgent { color: var(--redact); }
+      @keyframes fadeUp { from { opacity:0; transform: translateY(12px);} to { opacity:1; transform:none;} }
+    </style>
+    {% block extra_style %}{% endblock %}
+  </head>
+  <body>
+    <div class="page-header">
+      <div class="brand">⬡ <strong>ResumeVault</strong> · Round 1 Assessment</div>
+      {% block header_right %}{% endblock %}
+    </div>
+
+    <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}{% for m in messages %}<div class="flash">{{ m }}</div>{% endfor %}{% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+
+    <script src="{{ url_for('static', filename='js/anticheat.js') }}"></script>
+    {% block extra_script %}{% endblock %}
+  </body>
+</html>

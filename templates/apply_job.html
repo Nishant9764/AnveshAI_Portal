@@ -1,0 +1,86 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Apply — {{ job.title }} - Anvesh AI{% endblock %}
+{% block page_title %}Apply to {{ job.title }}{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"><span class="nav-icon">&#8962;</span> Home</a>
+<a href="{{ url_for('candidate_jobs') }}" class="active"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
+<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
+<a href="{{ url_for('candidate_applications') }}"><span class="nav-icon">&#128196;</span> My Applications</a>
+<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"><span class="nav-icon">&#128100;</span> Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="max-width:640px;">
+    <div class="card-header">
+        <h3>{{ job.title }}</h3>
+        <p style="color:#888;font-size:13px;">{{ job.company_name }} &middot; {{ job.location }} &middot; {{ job.job_type }}</p>
+    </div>
+
+    <p style="font-size:13.5px;color:#555;line-height:1.6;margin:14px 0 22px;">
+        Just pick a resume — that's it. We'll instantly extract your skills,
+        projects, and experience, and score it against this job. No cover letter needed.
+    </p>
+
+    <form method="POST" action="{{ url_for('apply_to_job', job_id=job.id) }}" enctype="multipart/form-data" id="apply-form">
+        <div class="field-group" style="margin-bottom:16px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:10px;">
+                <input type="radio" name="resume_choice" value="existing" {{ 'checked' if resumes else '' }}
+                       onchange="toggleResumeMode('existing')" {{ 'disabled' if not resumes else '' }}>
+                Use an existing resume
+            </label>
+            {% if resumes %}
+            <div id="existing-resume-list" style="padding-left:26px;display:flex;flex-direction:column;gap:8px;">
+                {% for r in resumes %}
+                <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:13px;">
+                    <input type="radio" name="resume_id" value="{{ r.id }}" {{ 'checked' if r.is_default else '' }}>
+                    <span>
+                        <strong>{{ r.filename }}</strong>
+                        <span style="color:#888;"> &middot; uploaded {{ r.uploaded_at.strftime('%b %d, %Y') if r.uploaded_at else '' }}</span>
+                        {% if r.is_default %}<span class="tag" style="margin-left:6px;">Default</span>{% endif %}
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="padding-left:26px;color:#999;font-size:12.5px;">No saved resumes yet — upload one below.</p>
+            {% endif %}
+        </div>
+
+        <div class="field-group" style="margin-bottom:20px;">
+            <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-bottom:10px;">
+                <input type="radio" name="resume_choice" value="upload" {{ 'checked' if not resumes else '' }}
+                       onchange="toggleResumeMode('upload')">
+                Upload a new resume
+            </label>
+            <div id="upload-resume-field" style="padding-left:26px;">
+                <input type="file" name="resume" accept=".pdf,.doc,.docx" class="form-control">
+                <p style="font-size:11.5px;color:#999;margin-top:6px;">PDF preferred. We redact your personal info before any AI scoring.</p>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submit-btn">Submit Application</button>
+        <p id="submitting-note" style="display:none;font-size:12.5px;color:#888;margin-top:10px;">
+            Scoring your resume against this job — this takes a few seconds…
+        </p>
+    </form>
+</div>
+
+<script>
+function toggleResumeMode(mode) {
+    const existingEl = document.getElementById('existing-resume-list');
+    const uploadEl = document.getElementById('upload-resume-field');
+    if (existingEl) existingEl.style.opacity = (mode === 'existing') ? '1' : '0.4';
+    if (uploadEl) uploadEl.style.opacity = (mode === 'upload') ? '1' : '0.4';
+}
+toggleResumeMode("{{ 'existing' if resumes else 'upload' }}");
+document.getElementById('apply-form').addEventListener('submit', function () {
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').textContent = 'Scoring…';
+    document.getElementById('submitting-note').style.display = 'block';
+});
+</script>
+{% endblock %}

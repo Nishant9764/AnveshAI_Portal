@@ -1,0 +1,63 @@
+{% extends "dashboard_base.html" %}
+{% block title %}My Applications - Anvesh AI{% endblock %}
+{% block page_title %}My Applications{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"><span class="nav-icon">&#8962;</span> Home</a>
+<a href="{{ url_for('candidate_jobs') }}"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
+<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
+<a href="{{ url_for('candidate_applications') }}" class="active"><span class="nav-icon">&#128196;</span> My Applications</a>
+<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"><span class="nav-icon">&#128100;</span> Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header"><h3>{{ apps|length }} application{{ 's' if apps|length != 1 else '' }}</h3></div>
+
+    {% if apps %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Job</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Applied</th>
+                <th>Match</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in apps %}
+            <tr>
+                <td style="font-weight:600;">{{ app.title }}</td>
+                <td>{{ app.company_name }}</td>
+                <td>{{ app.location }}</td>
+                <td>{{ app.applied_at|time_ago }}</td>
+                <td>
+                    {% set m = app.match_score %}
+                    <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}%</span>
+                </td>
+                <td>
+                    {% set s = app.status|lower %}
+                    <span class="status-chip {{ 'active' if s in ['shortlisted','offered'] else ('draft' if s == 'interview' else ('closed' if s == 'applied' else '')) }}"
+                          style="{% if s == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}">
+                        {{ app.status }}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128196;</div>
+        <h4>No applications yet</h4>
+        <p>Once you apply to jobs, you'll be able to track their status here.</p>
+        <a href="{{ url_for('candidate_jobs') }}" class="btn btn-primary">Browse Jobs</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

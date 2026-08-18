@@ -1,0 +1,210 @@
+{% extends "dashboard_base.html" %} {% block title %}Resume Score - Anvesh AI{%
+endblock %} {% block page_title %}Resume Score{% endblock %} {% block
+sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"
+  ><span class="nav-icon">&#8962;</span> Home</a
+>
+<a href="{{ url_for('candidate_jobs') }}"
+  ><span class="nav-icon">&#128203;</span> Jobs Feed</a
+>
+<a href="{{ url_for('saved_jobs_page') }}"
+  ><span class="nav-icon">&#9734;</span> Saved Jobs</a
+>
+<a href="{{ url_for('candidate_applications') }}"
+  ><span class="nav-icon">&#128196;</span> My Applications</a
+>
+<a href="{{ url_for('resume_score') }}" class="active"
+  ><span class="nav-icon">&#128202;</span> Resume Score</a
+>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"
+  ><span class="nav-icon">&#128100;</span> Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">&#9881;</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %}
+<div class="dashboard-grid">
+  <div class="card">
+    <div class="card-header"><h3>Upload your resume</h3></div>
+    <p
+      style="
+        color: var(--color-text-muted);
+        font-size: 13.5px;
+        margin-top: -8px;
+      "
+    >
+      Our AI will analyze your resume and give you a score along with
+      suggestions to improve it.
+    </p>
+    <form
+      method="POST"
+      action="{{ url_for('resume_score') }}"
+      enctype="multipart/form-data"
+      style="margin-top: 16px"
+    >
+      <div class="form-group">
+        <label for="resume">Resume file (PDF, DOC, DOCX — max 5MB)</label>
+        <input
+          type="file"
+          id="resume"
+          name="resume"
+          class="form-control"
+          accept=".pdf,.doc,.docx"
+          required
+        />
+      </div>
+      <button type="submit" class="btn btn-primary">Analyze Resume</button>
+    </form>
+    {% if profile and profile.resume_filename %}
+    <p
+      style="margin-top: 16px; font-size: 13px; color: var(--color-text-muted)"
+    >
+      Current file: <strong>{{ profile.resume_filename }}</strong>
+    </p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Your Score</h3></div>
+    <div class="donut-wrap">
+      <div class="donut">
+        {% set score = profile.resume_score if profile and profile.resume_score
+        else 0 %} {% set circumference = 2 * 3.14159 * 56 %} {% set offset =
+        circumference - (circumference * score / 100) %}
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle
+            cx="70"
+            cy="70"
+            r="56"
+            fill="none"
+            stroke="#eef0f4"
+            stroke-width="12"
+          />
+          <circle
+            cx="70"
+            cy="70"
+            r="56"
+            fill="none"
+            stroke="#4338ca"
+            stroke-width="12"
+            stroke-dasharray="{{ circumference }}"
+            stroke-dashoffset="{{ offset }}"
+            stroke-linecap="round"
+          />
+        </svg>
+        <div class="donut-label">
+          <div class="score">{{ score }}%</div>
+          <div class="score-tag">
+            {{ 'Strong' if score >= 75 else ('Good Score' if score >= 55 else
+            ('Needs Work' if score > 0 else 'Not scored')) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if breakdown %}
+    <div
+      style="
+        margin: 18px 0;
+        font-size: 12.5px;
+        color: var(--color-text-muted);
+        line-height: 2;
+      "
+    >
+      <div style="display: flex; justify-content: space-between">
+        <span>Skills depth</span
+        ><strong>{{ breakdown.skills_depth }}/100</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <span>Experience clarity</span
+        ><strong>{{ breakdown.experience_clarity }}/100</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <span>Quantified impact</span
+        ><strong>{{ breakdown.impact_score }}/100</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between">
+        <span>ATS-friendliness</span
+        ><strong>{{ breakdown.ats_friendliness }}/100</strong>
+      </div>
+    </div>
+    {% endif %} {% if profile and profile.resume_score_summary %}
+    <p
+      style="
+        font-size: 13px;
+        color: #444;
+        line-height: 1.6;
+        margin-bottom: 14px;
+      "
+    >
+      {{ profile.resume_score_summary }}
+    </p>
+    {% endif %} {% if profile and profile.resume_strengths %}
+    <p
+      style="
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #16a34a;
+        margin-bottom: 6px;
+      "
+    >
+      Strengths
+    </p>
+    <ul
+      style="
+        font-size: 12.5px;
+        color: #444;
+        line-height: 1.8;
+        margin: 0 0 14px 18px;
+      "
+    >
+      {% for s in profile.resume_strengths %}
+      <li>{{ s }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %} {% if profile and profile.resume_weaknesses %}
+    <p
+      style="
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #c0392b;
+        margin-bottom: 6px;
+      "
+    >
+      Weaknesses
+    </p>
+    <ul
+      style="
+        font-size: 12.5px;
+        color: #444;
+        line-height: 1.8;
+        margin: 0 0 14px 18px;
+      "
+    >
+      {% for w in profile.resume_weaknesses %}
+      <li>{{ w }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <p
+      style="font-size: 13px; color: var(--color-text-muted); margin: 0 0 10px"
+    >
+      Suggested skills to add
+    </p>
+    <div class="job-tags">
+      {% if profile and profile.resume_suggested_skills %} {% for skill in
+      profile.resume_suggested_skills %}
+      <span class="tag" style="background: #ecfdf5; color: #16a34a"
+        >{{ skill }}</span
+      >
+      {% endfor %} {% else %}
+      <span style="font-size: 12px; color: #999"
+        >Upload a resume to get personalized suggestions.</span
+      >
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

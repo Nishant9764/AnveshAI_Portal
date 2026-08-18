@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - Anvesh AI{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <a href="{{ url_for('index') }}" class="logo" style="display:flex;">
+            <span class="logo-mark">A</span>
+            <span>Anvesh AI</span>
+        </a>
+        <h1>Create your account</h1>
+        <p class="auth-subtitle">Join 50,000+ professionals and 2,000+ companies</p>
+
+        <div class="role-toggle">
+            <a href="{{ url_for('signup', role='candidate') }}" class="{{ 'active' if role == 'candidate' else '' }}">
+                &#128100; Candidate
+            </a>
+            <a href="{{ url_for('signup', role='employer') }}" class="{{ 'active' if role == 'employer' else '' }}">
+                &#127970; Employer
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('signup') }}">
+            <input type="hidden" name="role" value="{{ role }}">
+            <div class="form-group">
+                <label for="full_name">{{ 'Full name' if role == 'candidate' else 'Company / Your name' }}</label>
+                <input type="text" id="full_name" name="full_name" class="form-control"
+                       placeholder="{{ 'Jane Doe' if role == 'candidate' else 'Acme Corp / Jane Doe' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" style="margin-top: 6px;">
+                Sign up as {{ 'Candidate' if role == 'candidate' else 'Employer' }}
+            </button>
+        </form>
+
+        <div class="auth-footer-link">
+            Already have an account? <a href="{{ url_for('login', role=role) }}">Log in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

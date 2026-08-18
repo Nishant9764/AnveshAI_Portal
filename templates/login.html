@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Log In - Anvesh AI{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <a href="{{ url_for('index') }}" class="logo" style="display:flex;">
+            <span class="logo-mark">A</span>
+            <span>Anvesh AI</span>
+        </a>
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">Log in to continue your journey with Anvesh AI</p>
+
+        <div class="role-toggle">
+            <a href="{{ url_for('login', role='candidate') }}" class="{{ 'active' if role == 'candidate' else '' }}">
+                &#128100; Candidate
+            </a>
+            <a href="{{ url_for('login', role='employer') }}" class="{{ 'active' if role == 'employer' else '' }}">
+                &#127970; Employer
+            </a>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <input type="hidden" name="role" value="{{ role }}">
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required>
+            </div>
+            <div class="form-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="remember"> Remember me
+                </label>
+                <a href="#">Forgot password?</a>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">
+                Log in as {{ 'Candidate' if role == 'candidate' else 'Employer' }}
+            </button>
+        </form>
+
+        <div class="auth-footer-link">
+            Don't have an account? <a href="{{ url_for('signup', role=role) }}">Sign up</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

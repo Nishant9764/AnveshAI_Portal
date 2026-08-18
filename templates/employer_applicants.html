@@ -1,0 +1,133 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Applicants - Anvesh AI{% endblock %}
+{% block page_title %}Applicants{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header"><h3>{{ applicants|length }} applicant{{ 's' if applicants|length != 1 else '' }}</h3></div>
+
+    {% if applicants %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Candidate</th>
+                <th>Applied for</th>
+                <th>ATS Match</th>
+                <th>Sub-scores</th>
+                <th>Round 1</th>
+                <th>Integrity</th>
+                <th>Pipeline</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in applicants %}
+            <tr>
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="avatar-circle" style="width:32px; height:32px; font-size:12px;">{{ a.avatar_initials or a.full_name[0] }}</div>
+                        <div>
+                            <div style="font-weight:600;">{{ a.full_name }}</div>
+                            <div style="font-size:12px; color:var(--color-text-muted);">{{ a.email }}</div>
+                            {% if a.red_flags %}
+                            <div style="font-size:11px;color:#c0392b;margin-top:2px;">&#9888; {{ a.red_flags|length }} red flag{{ 's' if a.red_flags|length != 1 else '' }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td>{{ a.job_title }}</td>
+                <td>
+                    {% set m = a.match_score or 0 %}
+                    <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}%</span>
+                    <div style="font-size:11px;color:var(--color-text-muted);margin-top:3px;">
+                        {{ 'Passed baseline' if a.passed_ats else ('Below ' ~ a.min_match_score ~ '% baseline') }}
+                    </div>
+                </td>
+                <td style="font-size:11.5px;color:var(--color-text-muted);line-height:1.7;">
+                    Technical: <strong>{{ a.technical_match_score if a.technical_match_score is not none else '—' }}</strong><br>
+                    Experience: <strong>{{ a.experience_match_score if a.experience_match_score is not none else '—' }}</strong><br>
+                    Soft skills: <strong>{{ a.soft_skills_score if a.soft_skills_score is not none else '—' }}</strong><br>
+                    Impact (quantified): <strong>{{ a.impact_score if a.impact_score is not none else '—' }}</strong>
+                </td>
+                <td>
+                    {% if a.round1_score is not none %}
+                        <span class="match-badge {{ 'high' if a.round1_verdict == 'pass' else 'low' }}">{{ a.round1_score }}%</span>
+                        <div style="font-size:11px;color:var(--color-text-muted);margin-top:3px;">
+                            MCQ {{ a.mcq_pct or '—' }}% &middot; {{ a.round1_verdict or '' }}
+                        </div>
+                    {% elif a.invite_status == 'sent' %}
+                        <span style="font-size:12px;color:var(--color-text-muted);">Invited — in progress</span>
+                    {% elif a.invite_status == 'scheduled' %}
+                        <span style="font-size:12px;color:var(--color-text-muted);">Invite scheduled</span>
+                    {% elif a.invite_status == 'manual_hold' %}
+                        <span style="font-size:12px;color:var(--color-text-muted);">Awaiting your send</span>
+                    {% else %}
+                        <span style="color:var(--color-text-faint);">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if a.session_integrity_score is not none %}
+                        <a href="{{ url_for('applicant_integrity_report', app_id=a.id) }}"
+                           style="font-size:12px;text-decoration:underline;color:{{ '#1a7f4b' if a.session_integrity_score >= 90 else ('#c98a1f' if a.session_integrity_score >= 65 else '#c0392b') }};">
+                            {{ a.session_integrity_score }}/100
+                        </a>
+                        {% if a.warnings_count %}<div style="font-size:10.5px;color:#c0392b;">{{ a.warnings_count }} warning{{ 's' if a.warnings_count != 1 else '' }}</div>{% endif %}
+                    {% else %}
+                        <span style="color:var(--color-text-faint);">—</span>
+                    {% endif %}
+                </td>
+                <td style="min-width:150px;">
+                    {% if a.invite_status == 'manual_hold' %}
+                    <form method="POST" action="{{ url_for('send_invite_now', app_id=a.id) }}" style="margin-bottom:4px;">
+                        <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Send Round 1 Invite</button>
+                    </form>
+                    {% endif %}
+                    {% if a.round1_verdict == 'pass' and not a.round2_unlocked %}
+                    <form method="POST" action="{{ url_for('unlock_round2', app_id=a.id) }}" style="margin-bottom:4px;">
+                        <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Unlock Round 2</button>
+                    </form>
+                    {% elif a.round2_unlocked %}
+                        <div style="font-size:11px;color:var(--color-text-muted);">Round 2: {{ a.round2_score if a.round2_score is not none else 'pending' }}{% if a.round2_score is not none %}%{% endif %}</div>
+                    {% endif %}
+                    {% if a.round1_verdict == 'pass' and not a.round3_unlocked %}
+                    <form method="POST" action="{{ url_for('unlock_round3', app_id=a.id) }}">
+                        <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Unlock Round 3</button>
+                    </form>
+                    {% elif a.round3_unlocked %}
+                        <div style="font-size:11px;color:var(--color-text-muted);">Round 3: {{ a.round3_score if a.round3_score is not none else 'pending' }}{% if a.round3_score is not none %}%{% endif %}</div>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('update_applicant_status', app_id=a.id) }}">
+                        <select name="status" class="form-control" style="padding:6px 8px; font-size:12.5px;"
+                                onchange="this.form.submit()">
+                            {% for s in ['Applied', 'Shortlisted', 'Interview', 'Offered', 'Rejected'] %}
+                            <option value="{{ s }}" {{ 'selected' if a.status == s else '' }}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128101;</div>
+        <h4>No applicants yet</h4>
+        <p>Once candidates apply to your jobs, they'll show up here.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

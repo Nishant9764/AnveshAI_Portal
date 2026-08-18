@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Anvesh AI — Find the Perfect Job or Perfect Candidate{% endblock %}
+
+{% block content %}
+
+<nav class="navbar">
+    <a href="{{ url_for('index') }}" class="logo">
+        <span class="logo-mark">A</span>
+        <span>Anvesh AI</span>
+    </a>
+    <div class="navbar-links">
+        <a href="{{ url_for('index') }}" class="active">Home</a>
+        <a href="#about">About</a>
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#contact">Contact</a>
+    </div>
+    <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+</nav>
+
+<section class="hero">
+    <div class="hero-grid">
+        <div>
+            <span class="badge">&#11088; AI Powered Recruitment Platform</span>
+            <h1>Find the Perfect Job<br>or <span class="gradient">Perfect Candidate</span></h1>
+            <p>Anvesh AI connects talented people with the right opportunities using the power of Artificial Intelligence.</p>
+            <div class="hero-ctas">
+                <a href="{{ url_for('signup', role='candidate') }}" class="btn btn-primary">
+                    &#128100; I'm a Candidate <small style="opacity:.85; font-weight: 400;">&nbsp;Find your dream job</small>
+                </a>
+                <a href="{{ url_for('signup', role='employer') }}" class="btn btn-secondary">
+                    &#127970; I'm an Employer <small style="opacity:.85; font-weight: 400;">&nbsp;Hire the best talent</small>
+                </a>
+            </div>
+            <div class="hero-social-proof">
+                <div class="avatar-stack">
+                    <div class="avatar-mini" style="background:#c7d2fe;"></div>
+                    <div class="avatar-mini" style="background:#fbcfe8;"></div>
+                    <div class="avatar-mini" style="background:#bbf7d0;"></div>
+                    <div class="avatar-mini" style="background:#fde68a;"></div>
+                </div>
+                <span>Join 50,000+ professionals<br>and 2,000+ companies</span>
+            </div>
+        </div>
+        <div class="hero-illustration">
+            <svg width="100%" height="320" viewBox="0 0 480 320" xmlns="http://www.w3.org/2000/svg">
+                <rect x="20" y="20" width="200" height="130" rx="14" fill="#eef2ff" stroke="#c7d2fe"/>
+                <circle cx="55" cy="55" r="16" fill="#4338ca"/>
+                <rect x="80" y="45" width="110" height="8" rx="4" fill="#c7d2fe"/>
+                <rect x="80" y="60" width="80" height="8" rx="4" fill="#e0e7ff"/>
+                <rect x="40" y="90" width="160" height="8" rx="4" fill="#e0e7ff"/>
+                <rect x="40" y="105" width="120" height="8" rx="4" fill="#e0e7ff"/>
+                <rect x="40" y="120" width="140" height="8" rx="4" fill="#e0e7ff"/>
+                <circle cx="150" cy="220" r="55" fill="#dbeafe"/>
+                <circle cx="150" cy="195" r="22" fill="#2563eb"/>
+                <path d="M105 270 Q150 230 195 270" fill="#2563eb"/>
+                <circle cx="340" cy="240" r="55" fill="#ede9fe"/>
+                <circle cx="340" cy="210" r="22" fill="#7c3aed"/>
+                <path d="M295 290 Q340 250 385 290" fill="#7c3aed"/>
+                <rect x="290" y="60" width="130" height="80" rx="14" fill="#fff" stroke="#e5e7eb"/>
+                <text x="355" y="105" font-size="22" font-weight="800" fill="#16a34a" text-anchor="middle">95%</text>
+                <text x="355" y="122" font-size="9" fill="#6b7280" text-anchor="middle">AI Match Score</text>
+            </svg>
+        </div>
+    </div>
+</section>
+
+<section class="trusted-by">
+    <div class="eyebrow">TRUSTED BY AMAZING COMPANIES</div>
+    <div class="logo-row">
+        <span style="font-weight:700; font-size:18px; color:#4285F4;">Google</span>
+        <span style="font-weight:700; font-size:18px; color:#00A4EF;">Microsoft</span>
+        <span style="font-weight:700; font-size:18px; font-family: Georgia, serif;">amazon</span>
+        <span style="font-weight:700; font-size:18px; color:#A100FF;">accenture</span>
+        <span style="font-weight:700; font-size:18px; color:#0066B3;">TATA</span>
+        <span style="font-weight:700; font-size:18px; color:#007CC3;">Infosys</span>
+    </div>
+</section>
+
+<section class="section" id="features">
+    <div class="section-header">
+        <div class="eyebrow">FEATURES</div>
+        <h2>Everything you need to succeed</h2>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon blue">&#128100;</div>
+            <h3>AI Matching</h3>
+            <p>Our AI matches you with the perfect opportunities based on your skills and experience.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon green">&#128101;</div>
+            <h3>Smart Resume</h3>
+            <p>Get AI-powered insights and improve your resume effectively.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon pink">&#128196;</div>
+            <h3>Easy Apply</h3>
+            <p>Apply to jobs in one click with your saved profiles and documents.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon purple">&#128202;</div>
+            <h3>Advanced Analytics</h3>
+            <p>Employers get advanced analytics to find the most suitable candidates.</p>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="cta-banner">
+        <div class="cta-banner-text">
+            <span class="cta-banner-icon">&#128640;</span>
+            <div>
+                <h3>Ready to take the next step in your career?</h3>
+                <p>Join thousands of professionals finding their dream jobs or connect your company with top talent.</p>
+            </div>
+        </div>
+        <div class="cta-banner-actions">
+            <a href="{{ url_for('signup', role='candidate') }}" class="btn btn-white">Explore Jobs</a>
+            <a href="{{ url_for('signup', role='employer') }}" class="btn btn-ghost-white">Post a Job</a>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="footer-grid">
+        <div class="footer-brand">
+            <div class="logo">
+                <span class="logo-mark">A</span>
+                <span>Anvesh AI</span>
+            </div>
+            <p>AI Powered Recruitment Platform</p>
+        </div>
+        <div class="footer-col">
+            <h4>Platform</h4>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>For Candidates</h4>
+            <ul>
+                <li><a href="#">Browse Jobs</a></li>
+                <li><a href="{{ url_for('signup', role='candidate') }}">Create Profile</a></li>
+                <li><a href="#">Resume Builder</a></li>
+                <li><a href="#">Career Tips</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>For Employers</h4>
+            <ul>
+                <li><a href="{{ url_for('signup', role='employer') }}">Post a Job</a></li>
+                <li><a href="#">Browse Candidates</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#">Resources</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Company</h4>
+            <ul>
+                <li><a href="#about">About Us</a></li>
+                <li><a href="#contact">Contact Us</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>Follow Us</h4>
+            <div class="social-icons">
+                <a href="#">in</a>
+                <a href="#">tw</a>
+                <a href="#">fb</a>
+                <a href="#">ig</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Anvesh AI. All rights reserved.</div>
+</footer>
+
+{% endblock %}

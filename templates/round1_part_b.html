@@ -1,0 +1,60 @@
+{% extends "test_base.html" %}
+{% block title %}Round 1 · Part B · Question {{ q_number }}{% endblock %}
+{% block header_right %}
+<div class="progress-pill">Part B (Project Deep Dive) · Question {{ q_number }} / {{ q_total }}</div>
+{% endblock %}
+{% block content %}
+<div class="timer" id="timer">--:--</div>
+<div class="card">
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">
+    {{ question.skill }}
+  </div>
+  <h2 style="font-size:17px;line-height:1.5;margin-bottom:18px;">{{ question.question }}</h2>
+
+  <form id="answer-form" method="POST" action="{{ url_for('round1_part_b_answer', session_id=test_session.id) }}">
+    <input type="hidden" name="time_taken_seconds" id="time_taken_seconds">
+    <input type="hidden" name="keystroke_metrics" id="keystroke_metrics">
+    <label for="answer">Your answer</label>
+    <textarea id="answer" name="answer" rows="8" placeholder="Type your answer here — be specific." required></textarea>
+    <p style="font-size:11.5px;color:var(--muted);margin-top:8px;">Copy/paste is disabled — type your own answer.</p>
+    <button type="submit" class="btn" style="margin-top:20px;">Submit Answer</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  AntiCheat.initLockdown("{{ test_session.id }}", {
+    onTerminate: function () { window.location.href = "{{ url_for('test_graceful_exit', session_id=test_session.id) }}"; }
+  });
+
+  const answerEl = document.getElementById("answer");
+  AntiCheat.attachKeystrokeTracking(answerEl);
+
+  const TIME_LIMIT = 300; // 5 minutes for a project deep-dive answer
+  let remaining = TIME_LIMIT;
+  const timerEl = document.getElementById("timer");
+  const startedAt = performance.now();
+
+  function tick() {
+    remaining -= 1;
+    const m = Math.floor(Math.max(remaining, 0) / 60).toString().padStart(2, "0");
+    const s = Math.max(remaining, 0) % 60;
+    timerEl.textContent = m + ":" + s.toString().padStart(2, "0");
+    if (remaining <= 30) timerEl.classList.add("urgent");
+    if (remaining <= 0) { clearInterval(interval); submitForm(); }
+  }
+  const interval = setInterval(tick, 1000);
+  tick();
+
+  function submitForm() {
+    document.getElementById("time_taken_seconds").value = Math.round((performance.now() - startedAt) / 1000);
+    document.getElementById("keystroke_metrics").value = JSON.stringify(AntiCheat.getKeystrokeMetrics(answerEl));
+    document.getElementById("answer-form").submit();
+  }
+  document.getElementById("answer-form").addEventListener("submit", function () {
+    document.getElementById("time_taken_seconds").value = Math.round((performance.now() - startedAt) / 1000);
+    document.getElementById("keystroke_metrics").value = JSON.stringify(AntiCheat.getKeystrokeMetrics(answerEl));
+  });
+</script>
+{% endblock %}

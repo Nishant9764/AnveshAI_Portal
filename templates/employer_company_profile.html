@@ -1,0 +1,51 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Company Profile - Anvesh AI{% endblock %}
+{% block page_title %}Company Profile{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('company_profile') }}" class="active"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="settings-card">
+    <h3>Company profile</h3>
+    <p class="settings-subtitle">This information appears on your job listings.</p>
+
+    <form method="POST" action="{{ url_for('company_profile') }}">
+        <div class="form-group">
+            <label for="company_name">Company name</label>
+            <input type="text" id="company_name" name="company_name" class="form-control"
+                   value="{{ profile.company_name if profile else '' }}" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="industry">Industry</label>
+                <input type="text" id="industry" name="industry" class="form-control"
+                       value="{{ profile.industry if profile else '' }}" placeholder="e.g. Information Technology">
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-control"
+                       value="{{ profile.location if profile else '' }}" placeholder="e.g. Bangalore, India">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="website">Website</label>
+            <input type="text" id="website" name="website" class="form-control"
+                   value="{{ profile.website if profile else '' }}" placeholder="https://yourcompany.com">
+        </div>
+        <div class="form-group">
+            <label for="about">About the company</label>
+            <textarea id="about" name="about" class="form-control" placeholder="Tell candidates about your company...">{{ profile.about if profile else '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "test_base.html" %}
+{% block title %}{{ round_name }} Not Yet Available{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center;">
+  <div style="font-size:40px;margin-bottom:14px;">🔒</div>
+  <h2 style="font-size:20px;margin-bottom:12px;">{{ round_name }} isn't open yet</h2>
+  <p style="color:var(--muted);font-size:14px;">
+    The employer hasn't unlocked this round for you yet. Check back later, or
+    wait for a follow-up email.
+  </p>
+</div>
+{% endblock %}

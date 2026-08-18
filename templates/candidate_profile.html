@@ -1,0 +1,80 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Profile - Anvesh AI{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"><span class="nav-icon">&#8962;</span> Home</a>
+<a href="{{ url_for('candidate_jobs') }}"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
+<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
+<a href="{{ url_for('candidate_applications') }}"><span class="nav-icon">&#128196;</span> My Applications</a>
+<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}" class="active"><span class="nav-icon">&#128100;</span> Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="settings-card">
+    <h3>Your profile</h3>
+    <p class="settings-subtitle">This information helps us match you with the right jobs.</p>
+
+    <form method="POST" action="{{ url_for('candidate_profile') }}">
+        <div class="form-group">
+            <label>Full name</label>
+            <input type="text" class="form-control" value="{{ user.full_name }}" disabled>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" class="form-control" value="{{ user.email }}" disabled>
+        </div>
+        <div class="form-group">
+            <label for="headline">Headline</label>
+            <input type="text" id="headline" name="headline" class="form-control"
+                   value="{{ profile.headline if profile else '' }}" placeholder="e.g. Backend Developer">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input type="text" id="location" name="location" class="form-control"
+                       value="{{ profile.location if profile else '' }}" placeholder="e.g. Bangalore, India">
+            </div>
+            <div class="form-group">
+                <label for="experience_yrs">Experience (years)</label>
+                <input type="number" step="0.5" id="experience_yrs" name="experience_yrs" class="form-control"
+                       value="{{ profile.experience_yrs if profile else 0 }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="tech_stack">Tech stack (comma separated)</label>
+            <input type="text" id="tech_stack" name="tech_stack" class="form-control"
+                   value="{{ profile.tech_stack if profile else '' }}" placeholder="Python, Flask, AWS, Docker">
+        </div>
+        <div class="form-group">
+            <label for="interests">Interests / roles you want to see (comma separated)</label>
+            <input type="text" id="interests" name="interests" class="form-control"
+                   value="{{ profile.interests if profile else '' }}" placeholder="Backend, Machine Learning, Fintech">
+            <p class="hint" style="font-size:11.5px;color:#999;margin-top:4px;">
+                Your job feed is ranked using this plus your tech stack — most relevant jobs first.
+            </p>
+        </div>
+        <div class="form-group">
+            <label for="preferred_locations">Preferred locations (comma separated)</label>
+            <input type="text" id="preferred_locations" name="preferred_locations" class="form-control"
+                   value="{{ profile.preferred_locations if profile else '' }}" placeholder="Bangalore, Remote">
+        </div>
+        <div class="form-group">
+            <label>Preferred job types</label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;">
+                {% set current_types = (profile.preferred_job_types if profile and profile.preferred_job_types else '').split(',') %}
+                {% for t in ['Full-time', 'Part-time', 'Internship', 'Contract', 'Remote'] %}
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:400;">
+                    <input type="checkbox" name="preferred_job_types" value="{{ t }}" {{ 'checked' if t in current_types else '' }}>
+                    {{ t }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+</div>
+{% endblock %}

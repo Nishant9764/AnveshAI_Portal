@@ -1,0 +1,21 @@
+{% macro checkpoint_trail(session) %}
+{% set rounds = [("basic", "Basic"), ("medium", "Medium"), ("advanced", "Advanced")] %}
+{% set status = session.status %}
+{% set current = session.current_round %}
+<div class="checkpoint-trail">
+  {% for key, display in rounds %}
+    {% set is_failed = (status == 'stopped_basic' and key in ['medium','advanced']) or (status == 'stopped_medium' and key == 'advanced') %}
+    {% set is_done = (key == 'basic' and session.basic_score is not none and current != 'basic') or
+                     (key == 'medium' and session.medium_score is not none and current != 'medium') or
+                     (key == 'advanced' and session.advanced_score is not none) %}
+    {% set is_active = (current == key and not is_failed) %}
+    <div class="checkpoint {% if is_failed %}failed{% elif is_done %}done{% elif is_active %}active{% endif %}">
+      <div class="node">{% if is_done %}✓{% elif is_failed %}✕{% else %}{{ loop.index }}{% endif %}</div>
+      <div class="label">{{ display }}</div>
+    </div>
+    {% if not loop.last %}
+      <div class="trail-line {% if is_done %}done{% endif %}"></div>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endmacro %}

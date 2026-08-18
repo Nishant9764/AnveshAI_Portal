@@ -1,0 +1,150 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Candidate Dashboard - Anvesh AI{% endblock %}
+{% block page_title %}Candidate Dashboard{% endblock %}
+
+{% block topbar_search %}
+<div class="topbar-search">
+    <span class="search-icon">&#128269;</span>
+    <input type="text" placeholder="Search for jobs, companies...">
+</div>
+{% endblock %}
+
+{% block topbar_actions %}
+<button class="icon-btn">&#9825;</button>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}" class="active"><span class="nav-icon">&#8962;</span> Home</a>
+<a href="{{ url_for('candidate_jobs') }}"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
+<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
+<a href="{{ url_for('candidate_applications') }}"><span class="nav-icon">&#128196;</span> My Applications</a>
+<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"><span class="nav-icon">&#128100;</span> Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="dashboard-grid">
+    <div>
+        <div class="search-bar-large">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" placeholder="Search jobs, skills, companies...">
+        </div>
+        <div class="filters-row">
+            <span class="filter-pill">Location &#9662;</span>
+            <span class="filter-pill">Experience &#9662;</span>
+            <span class="filter-pill">Job Type &#9662;</span>
+            <span class="filter-pill">Tech Stack &#9662;</span>
+            <span class="filter-pill">Salary &#9662;</span>
+            <span class="filter-pill">More Filters &#9776;</span>
+        </div>
+
+        <div class="card-header">
+            <h3>Recommended for you</h3>
+        </div>
+
+        {% if jobs %}
+            {% for job in jobs %}
+            <div class="job-card">
+                <div class="job-logo">{{ job.company_name[0] }}</div>
+                <div class="job-info">
+                    <p class="job-title">{{ job.title }}</p>
+                    <p class="job-company">{{ job.company_name }} &middot; {{ job.location }}</p>
+                    <div class="job-tags">
+                        {% if job.tech_stack %}
+                            {% for tech in job.tech_stack.split(',')[:4] %}
+                            <span class="tag">{{ tech.strip() }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="job-meta">
+                    {% if job.salary_min_lpa and job.salary_max_lpa %}
+                    <div class="job-salary">&#8377;{{ job.salary_min_lpa|int }} - {{ job.salary_max_lpa|int }} LPA</div>
+                    {% endif %}
+                    <div class="job-time">{{ job.posted_at|time_ago }}</div>
+                    <div class="job-actions">
+                        <form method="POST" action="{{ url_for('save_job', job_id=job.id) }}" style="display:inline;">
+                            <button type="submit" class="bookmark-btn {{ 'active' if job.id in saved_job_ids else '' }}">&#9734;</button>
+                        </form>
+                        <a href="{{ url_for('apply_to_job_page', job_id=job.id) }}" class="btn btn-primary btn-sm">Apply Now</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            <div style="text-align:center; margin-top: 8px;">
+                <a href="{{ url_for('candidate_jobs') }}" style="color: var(--color-primary); font-weight: 600; font-size: 14px;">View all jobs &rarr;</a>
+            </div>
+        {% else %}
+            <div class="empty-state card">
+                <div class="empty-icon">&#128203;</div>
+                <h4>No jobs available yet</h4>
+                <p>Check back soon — new opportunities are added regularly.</p>
+            </div>
+        {% endif %}
+
+        <div class="card" style="margin-top: 20px; display:flex; align-items:center; justify-content:space-between; gap: 16px; flex-wrap: wrap;">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <span style="font-size: 24px;">&#128196;</span>
+                <div>
+                    <h3 style="margin:0 0 2px;">Let AI find better jobs for you</h3>
+                    <p style="margin:0; font-size: 13.5px; color: var(--color-text-muted);">Upload your resume and get AI-powered job recommendations.</p>
+                </div>
+            </div>
+            <a href="{{ url_for('resume_score') }}" class="btn btn-primary">Upload Resume</a>
+        </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="card">
+            <div class="card-header"><h3>Resume Score</h3></div>
+            <div class="donut-wrap">
+                <div class="donut">
+                    {% set score = profile.resume_score if profile and profile.resume_score else 0 %}
+                    {% set circumference = 2 * 3.14159 * 56 %}
+                    {% set offset = circumference - (circumference * score / 100) %}
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <circle cx="70" cy="70" r="56" fill="none" stroke="#eef0f4" stroke-width="12"/>
+                        <circle cx="70" cy="70" r="56" fill="none" stroke="#4338ca" stroke-width="12"
+                                stroke-dasharray="{{ circumference }}" stroke-dashoffset="{{ offset }}" stroke-linecap="round"/>
+                    </svg>
+                    <div class="donut-label">
+                        <div class="score">{{ score }}%</div>
+                        <div class="score-tag">{{ 'Good Score' if score >= 60 else ('Needs Work' if score > 0 else 'Not scored') }}</div>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:13px; color:var(--color-text-muted); margin: 0 0 10px;">Improve your score by enhancing these skills</p>
+            <div class="job-tags" style="margin-bottom: 16px;">
+                <span class="tag" style="background:#ecfdf5; color:#16a34a;">Docker</span>
+                <span class="tag" style="background:#ecfdf5; color:#16a34a;">Kubernetes</span>
+                <span class="tag" style="background:#ecfdf5; color:#16a34a;">Redis</span>
+            </div>
+            <a href="{{ url_for('resume_score') }}" class="btn btn-outline btn-block">View Details</a>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3>My Applications</h3></div>
+            <div class="app-status-list">
+                <div class="app-status-row">
+                    <span class="status-label"><span class="status-dot applied"></span> Applied</span>
+                    <span class="status-count">{{ stats.applied }}</span>
+                </div>
+                <div class="app-status-row">
+                    <span class="status-label"><span class="status-dot shortlisted"></span> Shortlisted</span>
+                    <span class="status-count">{{ stats.shortlisted }}</span>
+                </div>
+                <div class="app-status-row">
+                    <span class="status-label"><span class="status-dot interview"></span> Interview</span>
+                    <span class="status-count">{{ stats.interview }}</span>
+                </div>
+                <div class="app-status-row">
+                    <span class="status-label"><span class="status-dot rejected"></span> Rejected</span>
+                    <span class="status-count">{{ stats.rejected }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

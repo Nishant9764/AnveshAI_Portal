@@ -1,0 +1,22 @@
+{% extends "test_base.html" %}
+{% block title %}Assessment Complete{% endblock %}
+{% block content %}
+<div class="card" style="text-align:center;">
+  <div style="font-size:40px;margin-bottom:14px;">🎉</div>
+  <h2 style="font-size:20px;margin-bottom:12px;">Assessment Complete!</h2>
+  <p style="color:var(--text);font-size:14.5px;line-height:1.8;max-width:480px;margin:0 auto 16px;">
+    {% if top_skills %}
+      You showcased strong concepts in <strong>{{ top_skills | join(' and ') }}</strong>.
+    {% else %}
+      You showed solid, grounded answers throughout.
+    {% endif %}
+    We've sent your verified profile to the employer.
+  </p>
+  <p style="color:var(--muted);font-size:13px;">
+    They'll be in touch with next steps. You can safely close this tab now.
+  </p>
+</div>
+<script>
+  if (document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
+</script>
+{% endblock %}

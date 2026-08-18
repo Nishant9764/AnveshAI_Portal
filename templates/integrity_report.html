@@ -1,0 +1,53 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Integrity Report - Anvesh AI{% endblock %}
+{% block page_title %}Integrity Report{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<a href="{{ url_for('employer_applicants') }}" style="font-size:13px;color:#888;">&larr; Back to Applicants</a>
+
+{% if not report %}
+<div class="empty-state" style="margin-top:20px;">
+    <h4>No integrity data yet</h4>
+    <p>This candidate hasn't started (or hasn't finished) the assessment.</p>
+</div>
+{% else %}
+<div class="card" style="max-width:640px;margin-top:16px;">
+    <div class="card-header">
+        <h3>Integrity Score: {{ report.integrity_score }}/100</h3>
+        <p style="font-size:13px;color:{{ '#1a7f4b' if report.integrity_score >= 90 else ('#c98a1f' if report.integrity_score >= 65 else '#c0392b') }};font-weight:600;">
+            {{ report.label }}
+        </p>
+    </div>
+    <p style="font-size:13px;color:#666;margin:8px 0 18px;">
+        Warnings issued: <strong>{{ report.warnings_count }}</strong> (test auto-ends at 3)
+    </p>
+
+    <h4 style="font-size:14px;margin-bottom:10px;">Event log</h4>
+    {% if report.events %}
+    <table class="data-table">
+        <thead><tr><th>Event</th><th>Detail</th><th>Time</th></tr></thead>
+        <tbody>
+            {% for e in report.events %}
+            <tr>
+                <td style="text-transform:capitalize;">{{ e.event_type.replace('_', ' ') }}</td>
+                <td style="font-size:12px;color:#666;">{{ e.detail or '—' }}</td>
+                <td style="font-size:12px;color:#888;">{{ e.created_at.strftime('%H:%M:%S') if e.created_at else '' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#999;font-size:13px;">No anti-cheat events were triggered — clean session.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
