@@ -1,63 +1,116 @@
-{% extends "dashboard_base.html" %}
-{% block title %}My Applications - Anvesh AI{% endblock %}
-{% block page_title %}My Applications{% endblock %}
-
-{% block sidebar_nav %}
-<a href="{{ url_for('candidate_dashboard') }}"><span class="nav-icon">&#8962;</span> Home</a>
-<a href="{{ url_for('candidate_jobs') }}"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
-<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
-<a href="{{ url_for('candidate_applications') }}" class="active"><span class="nav-icon">&#128196;</span> My Applications</a>
-<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
+{% extends "dashboard_base.html" %} {% block title %}My Applications - Anvesh
+AI{% endblock %} {% block page_title %}My Applications{% endblock %} {% block
+sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"
+  ><span class="nav-icon">&#8962;</span> Home</a
+>
+<a href="{{ url_for('candidate_jobs') }}"
+  ><span class="nav-icon">&#128203;</span> Jobs Feed</a
+>
+<a href="{{ url_for('saved_jobs_page') }}"
+  ><span class="nav-icon">&#9734;</span> Saved Jobs</a
+>
+<a href="{{ url_for('candidate_applications') }}" class="active"
+  ><span class="nav-icon">&#128196;</span> My Applications</a
+>
+<a href="{{ url_for('resume_score') }}"
+  ><span class="nav-icon">&#128202;</span> Resume Score</a
+>
 <a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
-<a href="{{ url_for('candidate_profile') }}"><span class="nav-icon">&#128100;</span> Profile</a>
-<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
-{% endblock %}
-
-{% block dashboard_content %}
+<a href="{{ url_for('candidate_profile') }}"
+  ><span class="nav-icon">&#128100;</span> Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">&#9881;</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %} {% set has_pending = apps |
+selectattr('screening_status', 'in', ['pending', 'processing']) | list | length
+> 0 %} {% if has_pending %}
+<meta http-equiv="refresh" content="6" />
+{% endif %}
 <div class="card">
-    <div class="card-header"><h3>{{ apps|length }} application{{ 's' if apps|length != 1 else '' }}</h3></div>
+  <div class="card-header">
+    <h3>{{ apps|length }} application{{ 's' if apps|length != 1 else '' }}</h3>
+  </div>
 
-    {% if apps %}
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Job</th>
-                <th>Company</th>
-                <th>Location</th>
-                <th>Applied</th>
-                <th>Match</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for app in apps %}
-            <tr>
-                <td style="font-weight:600;">{{ app.title }}</td>
-                <td>{{ app.company_name }}</td>
-                <td>{{ app.location }}</td>
-                <td>{{ app.applied_at|time_ago }}</td>
-                <td>
-                    {% set m = app.match_score %}
-                    <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}%</span>
-                </td>
-                <td>
-                    {% set s = app.status|lower %}
-                    <span class="status-chip {{ 'active' if s in ['shortlisted','offered'] else ('draft' if s == 'interview' else ('closed' if s == 'applied' else '')) }}"
-                          style="{% if s == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}">
-                        {{ app.status }}
-                    </span>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-icon">&#128196;</div>
-        <h4>No applications yet</h4>
-        <p>Once you apply to jobs, you'll be able to track their status here.</p>
-        <a href="{{ url_for('candidate_jobs') }}" class="btn btn-primary">Browse Jobs</a>
-    </div>
-    {% endif %}
+  {% if apps %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Job</th>
+        <th>Company</th>
+        <th>Location</th>
+        <th>Applied</th>
+        <th>Match</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for app in apps %}
+      <tr>
+        <td style="font-weight: 600">{{ app.title }}</td>
+        <td>{{ app.company_name }}</td>
+        <td>{{ app.location }}</td>
+        <td>{{ app.applied_at|time_ago }}</td>
+        <td>
+          {% if app.screening_status in ('pending', 'processing') %}
+          <span
+            class="match-badge mid"
+            style="display: inline-flex; align-items: center; gap: 5px"
+          >
+            <span class="spin-dot"></span> Scoring…
+          </span>
+          {% elif app.screening_status == 'failed' %}
+          <span class="match-badge low">Retry needed</span>
+          {% else %} {% set m = app.match_score if app.match_score is not none
+          else 0 %}
+          <span
+            class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}"
+            >{{ m }}%</span
+          >
+          {% endif %}
+        </td>
+        <td>
+          {% set s = app.status|lower %}
+          <span
+            class="status-chip {{ 'active' if s in ['shortlisted','offered'] else ('draft' if s == 'interview' else ('closed' if s == 'applied' else '')) }}"
+            style="{% if s == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}"
+          >
+            {{ app.status }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">&#128196;</div>
+    <h4>No applications yet</h4>
+    <p>Once you apply to jobs, you'll be able to track their status here.</p>
+    <a href="{{ url_for('candidate_jobs') }}" class="btn btn-primary"
+      >Browse Jobs</a
+    >
+  </div>
+  {% endif %}
 </div>
+<style>
+  @keyframes spin-pulse {
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+  .spin-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    display: inline-block;
+    animation: spin-pulse 1s ease-in-out infinite;
+  }
+</style>
 {% endblock %}
