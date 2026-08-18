@@ -252,43 +252,66 @@ def get_test_state(session_id):
             row = cursor.fetchone()
         cursor.close()
         return dict(row) if row else None
-
-
-def update_test_state(session_id, **fields):
-    if not fields:
-        return
-    get_test_state(session_id)  # ensure a row exists
-    cols = ", ".join(f"{k} = %s" for k in fields)
-    values = list(fields.values()) + [session_id]
-    with get_conn() as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            f"UPDATE test_state SET {cols}, updated_at = CURRENT_TIMESTAMP WHERE session_id = %s",
-            values,
-        )
-        cursor.close()
+    
+def get_responses(session_id, round_name=None):
     with get_conn() as conn:
         cursor = conn.cursor(cursor_factory=DictCursor)
+
         if round_name:
             cursor.execute(
-                "SELECT * FROM responses WHERE session_id = %s AND round_name = %s ORDER BY id",
+                """
+                SELECT *
+                FROM responses
+                WHERE session_id = %s
+                  AND round_name = %s
+                ORDER BY id
+                """,
                 (session_id, round_name),
             )
         else:
             cursor.execute(
-                "SELECT * FROM responses WHERE session_id = %s ORDER BY id",
+                """
+                SELECT *
+                FROM responses
+                WHERE session_id = %s
+                ORDER BY id
+                """,
                 (session_id,),
             )
+
         rows = cursor.fetchall()
         cursor.close()
-        
-        # Convert to dict list
+
         rows = [dict(r) for r in rows]
+
         for row in rows:
-            for key in ("options", "rubric"):
+            for key in ("options", "rubric", "keystroke_metrics"):
                 if isinstance(row.get(key), str):
                     try:
                         row[key] = json.loads(row[key])
                     except (TypeError, json.JSONDecodeError):
                         pass
+
         return rows
+
+
+def update_test_state(session_id, **fields):
+    if not fields:
+        return
+
+    get_test_state(session_id)
+
+    cols = ", ".join(f"{k} = %s" for k in fields)
+    values = list(fields.values()) + [session_id]
+
+    with get_conn() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            f"""
+            UPDATE test_state
+            SET {cols}, updated_at = CURRENT_TIMESTAMP
+            WHERE session_id = %s
+            """,
+            values,
+        )
+        cursor.close()
