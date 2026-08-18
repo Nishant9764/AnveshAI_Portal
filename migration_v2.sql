@@ -195,3 +195,24 @@ CREATE TABLE IF NOT EXISTS email_log (
     error           TEXT,
     sent_at         TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ------------------------------------------------------------
+-- WIDEN COLUMNS that were VARCHAR(255) but now hold variable-length,
+-- AI-derived or joined strings (a resume with 20+ skills, or a JD with
+-- a long skills list, easily exceeds 255 chars and was throwing
+-- StringDataRightTruncation). Safe to re-run.
+-- ------------------------------------------------------------
+ALTER TABLE candidate_profiles ALTER COLUMN tech_stack TYPE TEXT;
+ALTER TABLE jobs ALTER COLUMN tech_stack TYPE TEXT;
+ALTER TABLE resumes ALTER COLUMN filename TYPE TEXT;
+ALTER TABLE resumes ALTER COLUMN name_found TYPE TEXT;
+ALTER TABLE applications ALTER COLUMN rejected_reason TYPE TEXT;
+
+-- ------------------------------------------------------------
+-- ASYNC SCREENING — apply now returns instantly; the actual Gemini
+-- scoring runs in a background job. This tracks where a given
+-- application is in that pipeline.
+-- ------------------------------------------------------------
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS screening_status VARCHAR(20) DEFAULT 'pending'
+    CHECK (screening_status IN ('pending', 'processing', 'done', 'failed'));
+ALTER TABLE applications ADD COLUMN IF NOT EXISTS screening_error TEXT;
