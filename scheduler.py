@@ -15,6 +15,7 @@ in the meantime, in which case it's skipped.
 """
 
 import logging
+import uuid
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import db
@@ -22,6 +23,7 @@ import mailer
 
 logger = logging.getLogger("scheduler")
 _scheduler = None
+_app_ref = None
 
 
 def process_due_invites():
@@ -60,7 +62,8 @@ def process_due_invites():
 
 
 def init_scheduler(app, check_interval_minutes=5):
-    global _scheduler
+    global _scheduler, _app_ref
+    _app_ref = app
     if _scheduler is not None:
         return _scheduler
 
@@ -77,3 +80,30 @@ def init_scheduler(app, check_interval_minutes=5):
     _scheduler.start()
     logger.info("APScheduler started (checking due invites every %s min)", check_interval_minutes)
     return _scheduler
+
+
+def run_in_background(func, *args, **kwargs):
+    """
+    Fire-and-forget: runs `func(*args, **kwargs)` inside an app context,
+    on the scheduler's own thread pool, essentially immediately — NOT on
+    the Flask request thread. This is what lets `apply_to_job` return an
+    instant "Application submitted!" response to the candidate while the
+    actual Gemini scoring (the slow part — a real network round-trip)
+    happens after the response has already gone out.
+
+    Uses APScheduler (already running for the 12h/24h invite triggers)
+    rather than spinning up a separate thread-management system.
+    """
+    if _scheduler is None or _app_ref is None:
+        raise RuntimeError("Scheduler not initialized — call init_scheduler(app) first.")
+
+    def _wrapped():
+        with _app_ref.app_context():
+            try:
+                func(*args, **kwargs)
+            except Exception as e:
+                logger.error("Background job %s failed: %s", getattr(func, "__name__", func), e)
+
+    job_id = f"bg-{uuid.uuid4().hex[:12]}"
+    _scheduler.add_job(_wrapped, "date", id=job_id)
+    return job_id
