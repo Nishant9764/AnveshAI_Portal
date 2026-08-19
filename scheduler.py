@@ -61,6 +61,26 @@ def process_due_invites():
             logger.info("Sent delayed test invite for application %s", row["application_id"])
 
 
+def recover_stale_screenings(stale_after_minutes=5):
+    """Safety net: if an application has been 'processing' for longer
+    than a screening call should ever realistically take, the background
+    job almost certainly crashed somewhere without hitting our own
+    except-block (e.g. the process itself got killed mid-job). Recover it
+    to 'failed' with a clear reason rather than leaving the candidate and
+    employer staring at 'Scoring…' forever with no way to know why."""
+    rows = db.query_all(
+        """UPDATE applications
+           SET screening_status='failed',
+               screening_error='Screening timed out — please contact support or reapply.'
+           WHERE screening_status='processing'
+             AND applied_at < NOW() - (INTERVAL '1 minute' * %s)
+           RETURNING id""",
+        (int(stale_after_minutes),),
+    )
+    if rows:
+        logger.info("Recovered %d stale 'processing' application(s)", len(rows))
+
+
 def init_scheduler(app, check_interval_minutes=5):
     global _scheduler, _app_ref
     _app_ref = app
@@ -76,7 +96,15 @@ def init_scheduler(app, check_interval_minutes=5):
             except Exception as e:
                 logger.error("process_due_invites failed: %s", e)
 
+    def _recovery_job():
+        with app.app_context():
+            try:
+                recover_stale_screenings()
+            except Exception as e:
+                logger.error("recover_stale_screenings failed: %s", e)
+
     _scheduler.add_job(_job, "interval", minutes=check_interval_minutes, id="due_invites")
+    _scheduler.add_job(_recovery_job, "interval", minutes=2, id="recover_stale_screenings")
     _scheduler.start()
     logger.info("APScheduler started (checking due invites every %s min)", check_interval_minutes)
     return _scheduler
