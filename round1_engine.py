@@ -156,9 +156,10 @@ def score_part_b(gemini_scores):
 
 def compute_round1_result(mcq_pct, part_b_pct):
     """
-    Final Round 1 verdict. Weighted blend of Part A (DB MCQ — verifies
-    breadth/claims) and Part B (Gemini subjective — verifies depth on
-    their own projects). Below-average overall -> auto-reject.
+    Legacy two-part blend (MCQ + project-grounded subjective). Superseded
+    by compute_final_round1_score() below, which blends across all three
+    sub-rounds (MCQ / Project+Experience / JD) — kept only in case
+    anything still imports it directly.
     """
     if part_b_pct is None:
         overall = mcq_pct
@@ -169,4 +170,28 @@ def compute_round1_result(mcq_pct, part_b_pct):
         verdict = "pass"
     else:
         verdict = "reject"
+    return {"round1_score": overall, "verdict": verdict}
+
+
+def compute_final_round1_score(mcq_pct, subround2_pct, subround3_pct):
+    """
+    The real, current Round 1 blend across all three sub-rounds:
+      Sub-round 1 — Skills MCQ (DB-backed, honeypot-calibrated)
+      Sub-round 2 — Project & Experience deep dive (Gemini, dynamic)
+      Sub-round 3 — JD-fit testing (Gemini, dynamic)
+
+    mcq_pct can be None if the question bank had nothing for this
+    candidate's skills (an unseeded/thin bank) — in that case we don't
+    penalize the candidate for a gap in the employer's data; we just
+    reweight across the two sub-rounds that did run.
+    """
+    subround2_pct = subround2_pct if subround2_pct is not None else 0.0
+    subround3_pct = subround3_pct if subround3_pct is not None else 0.0
+
+    if mcq_pct is None:
+        overall = round(subround2_pct * 0.5 + subround3_pct * 0.5, 1)
+    else:
+        overall = round(mcq_pct * 0.4 + subround2_pct * 0.3 + subround3_pct * 0.3, 1)
+
+    verdict = "pass" if overall >= 60 else "reject"
     return {"round1_score": overall, "verdict": verdict}
