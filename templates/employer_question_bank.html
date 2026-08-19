@@ -1,0 +1,47 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Question Bank - Anvesh AI{% endblock %}
+{% block page_title %}Question Bank{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="{{ url_for('question_bank_diagnostic') }}" class="active"><span class="nav-icon">&#128218;</span> Question Bank</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header">
+        <h3>{{ total }} total question{{ 's' if total != 1 else '' }} in the bank</h3>
+        <p style="font-size:12.5px;color:#888;">Grouped by skill / difficulty / type. Round 1 matching is exact on
+            <code>skill</code> (case/whitespace-insensitive) against the candidate's resume-extracted skills, and
+            requires <code>question_type = 'mcq'</code>. If a skill your candidates commonly claim isn't listed
+            below, or only shows up under a different name/casing, that's why Round 1 comes up short for them.</p>
+    </div>
+
+    {% if rows %}
+    <table class="data-table">
+        <thead><tr><th>Skill</th><th>Difficulty</th><th>Type</th><th>Count</th></tr></thead>
+        <tbody>
+            {% for r in rows %}
+            <tr>
+                <td style="font-weight:600;">{{ r.skill }}</td>
+                <td>{{ r.difficulty or '—' }}</td>
+                <td>{{ r.question_type or '—' }}</td>
+                <td>{{ r.n }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">&#128218;</div>
+        <h4>No questions in the bank yet</h4>
+        <p>Round 1's skills section will be automatically skipped for candidates until this is populated.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

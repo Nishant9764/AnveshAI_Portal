@@ -34,7 +34,12 @@ DIFFICULTY_BY_SENIORITY = {
 def _fetch_for_skill(skill, difficulties, exclude_ids, limit):
     """Fetch up to `limit` questions for one skill, preferring the
     honeypot-calibrated difficulty order, falling back to any difficulty
-    for that skill if the bank is thin."""
+    for that skill if the bank is thin.
+
+    Matching is trimmed + case-insensitive on both skill and difficulty —
+    real-world/imported datasets are never perfectly normalized, and a
+    stray space or "Python " vs "python" shouldn't silently produce zero
+    matches."""
     picked = []
     seen = set(exclude_ids)
 
@@ -43,8 +48,9 @@ def _fetch_for_skill(skill, difficulties, exclude_ids, limit):
             break
         rows = db.query_all(
             """SELECT * FROM questions
-               WHERE lower(skill) = lower(%s) AND difficulty = %s
-                 AND question_type = 'mcq'
+               WHERE lower(trim(skill)) = lower(trim(%s))
+                 AND lower(trim(difficulty)) = lower(trim(%s))
+                 AND lower(trim(question_type)) = 'mcq'
                ORDER BY random() LIMIT %s""",
             (skill, diff, limit - len(picked)),
         )
@@ -56,7 +62,8 @@ def _fetch_for_skill(skill, difficulties, exclude_ids, limit):
     if len(picked) < limit:
         rows = db.query_all(
             """SELECT * FROM questions
-               WHERE lower(skill) = lower(%s) AND question_type = 'mcq'
+               WHERE lower(trim(skill)) = lower(trim(%s))
+                 AND lower(trim(question_type)) = 'mcq'
                ORDER BY random() LIMIT %s""",
             (skill, limit - len(picked)),
         )
@@ -98,7 +105,7 @@ def select_round1_mcqs(skills, seniority="mid"):
         need = MIN_QUESTIONS - len(picked)
         rows = db.query_all(
             """SELECT * FROM questions
-               WHERE question_type = 'mcq' AND id != ALL(%s)
+               WHERE lower(trim(question_type)) = 'mcq' AND id != ALL(%s)
                ORDER BY random() LIMIT %s""",
             (exclude_ids or [-1], need),
         )

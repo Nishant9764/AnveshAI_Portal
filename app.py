@@ -910,6 +910,23 @@ def register_routes(app):
             top_skills=top_skills,
         )
 
+    @app.route("/employer/question-bank")
+    @login_required(role="employer")
+    def question_bank_diagnostic():
+        """Quick visibility into what's actually in the `questions` table
+        — skill/difficulty/question_type combinations and counts — so a
+        mismatch between resume-extracted skill names and your dataset's
+        `skill` column values is obvious at a glance instead of showing up
+        as a mysteriously empty Round 1."""
+        total = db.query_one("SELECT COUNT(*) AS n FROM questions")
+        by_skill = db.query_all(
+            """SELECT skill, difficulty, question_type, COUNT(*) AS n
+               FROM questions GROUP BY skill, difficulty, question_type
+               ORDER BY skill, difficulty"""
+        )
+        return render_template("employer_question_bank.html",
+                                total=(total["n"] if total else 0), rows=by_skill)
+
     @app.route("/employer/jobs/create", methods=["GET", "POST"])
     @login_required(role="employer")
     def create_job():

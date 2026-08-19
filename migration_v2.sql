@@ -229,3 +229,31 @@ ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS linkedin_url TEXT;
 ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS twitter_url TEXT;
 ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS benefits TEXT;
 ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS tech_stack TEXT;
+
+-- ------------------------------------------------------------
+-- RELAX the `questions` table's vocabulary assumptions. It was created
+-- with CHECK constraints assuming difficulty/experience_level/question_type
+-- values in a specific lowercase set — any real-world/custom dataset that
+-- uses different casing or a slightly different vocabulary (e.g. "Easy",
+-- "MCQ", "Intermediate") had every one of those rows silently REJECTED at
+-- insert time. Also widening question_id, which was too narrow for some
+-- externally-generated question IDs. Safe to re-run.
+-- ------------------------------------------------------------
+ALTER TABLE questions DROP CONSTRAINT IF EXISTS questions_difficulty_check;
+ALTER TABLE questions DROP CONSTRAINT IF EXISTS questions_experience_level_check;
+ALTER TABLE questions DROP CONSTRAINT IF EXISTS questions_question_type_check;
+ALTER TABLE questions ALTER COLUMN question_id TYPE VARCHAR(150);
+ALTER TABLE questions ALTER COLUMN difficulty TYPE VARCHAR(50);
+ALTER TABLE questions ALTER COLUMN experience_level TYPE VARCHAR(50);
+ALTER TABLE questions ALTER COLUMN question_type TYPE VARCHAR(50);
+
+-- Normalize whatever is already in there to the lowercase vocabulary the
+-- app's difficulty-calibration logic (question_bank.py) expects, so
+-- existing rows start matching immediately without a re-import.
+UPDATE questions SET difficulty = lower(trim(difficulty)) WHERE difficulty IS NOT NULL;
+UPDATE questions SET experience_level = lower(trim(experience_level)) WHERE experience_level IS NOT NULL;
+UPDATE questions SET question_type = lower(trim(question_type)) WHERE question_type IS NOT NULL;
+UPDATE questions SET question_type = 'mcq' WHERE question_type IN ('multiple_choice', 'multiple choice', 'mcqs');
+UPDATE questions SET difficulty = 'medium' WHERE difficulty IN ('intermediate', 'moderate');
+UPDATE questions SET difficulty = 'easy' WHERE difficulty IN ('beginner', 'basic');
+UPDATE questions SET difficulty = 'hard' WHERE difficulty IN ('advanced', 'expert');
