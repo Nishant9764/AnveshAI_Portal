@@ -43,6 +43,7 @@ selectattr('screening_status', 'in', ['pending', 'processing']) | list | length
         <th>Applied</th>
         <th>Match</th>
         <th>Status</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
@@ -78,6 +79,13 @@ selectattr('screening_status', 'in', ['pending', 'processing']) | list | length
           >
             {{ app.status }}
           </span>
+        </td>
+        <td>
+          <a
+            href="{{ url_for('candidate_application_detail', app_id=app.id) }}"
+            class="btn btn-outline btn-sm"
+            >View</a
+          >
         </td>
       </tr>
       {% endfor %}

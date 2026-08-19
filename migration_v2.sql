@@ -216,3 +216,16 @@ ALTER TABLE applications ALTER COLUMN rejected_reason TYPE TEXT;
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS screening_status VARCHAR(20) DEFAULT 'pending'
     CHECK (screening_status IN ('pending', 'processing', 'done', 'failed'));
 ALTER TABLE applications ADD COLUMN IF NOT EXISTS screening_error TEXT;
+
+-- ------------------------------------------------------------
+-- COMPANY PROFILE — richer employer branding (was just 5 fields:
+-- name/industry/website/location/about). Candidates deciding whether to
+-- take a 20-minute assessment want to see who they're dealing with.
+-- ------------------------------------------------------------
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS company_size VARCHAR(30);
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS founded_year INT;
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS logo_path TEXT;
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS linkedin_url TEXT;
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS twitter_url TEXT;
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS benefits TEXT;
+ALTER TABLE company_profiles ADD COLUMN IF NOT EXISTS tech_stack TEXT;
