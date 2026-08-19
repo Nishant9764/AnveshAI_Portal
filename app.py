@@ -1,12 +1,13 @@
 import os
 import json
 import random
+import logging
 from functools import wraps
 from datetime import datetime, timedelta
 
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    session, flash, g, jsonify, abort
+    session, flash, g, jsonify, abort, send_file
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -33,16 +34,28 @@ import scheduler as bg_scheduler
 
 TRIGGER_HOURS = {"12h": 12, "24h": 24}
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("app")
+
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    app.debug = os.environ.get("FLASK_DEBUG", "1") == "1"
     db.init_app(app)
 
     os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
     register_routes(app)
-    bg_scheduler.init_scheduler(app, app.config.get("SCHEDULER_CHECK_INTERVAL_MINUTES", 5))
+    # Guard against Flask's dev-server reloader (debug=True) spawning this
+    # twice: with the reloader on, the process is re-exec'd once with
+    # WERKZEUG_RUN_MAIN unset (the outer watcher, never serves requests)
+    # and once with it set to "true" (the real server). Without this
+    # guard both processes start their own APScheduler, silently doubling
+    # up periodic jobs. In production (no reloader, app.debug False) the
+    # var is never set either way, so the scheduler still starts normally.
+    if (not app.debug) or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        bg_scheduler.init_scheduler(app, app.config.get("SCHEDULER_CHECK_INTERVAL_MINUTES", 5))
     return app
 
 
@@ -78,6 +91,11 @@ def initials_from_name(name):
 def allowed_file(filename, app):
     return "." in filename and \
         filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
+
+
+def allowed_image_file(filename):
+    return "." in filename and \
+        filename.rsplit(".", 1)[1].lower() in {"png", "jpg", "jpeg", "webp", "svg"}
 
 
 def _skill_overlap_rank(job_tech_stack, candidate_tech_stack):
@@ -437,70 +455,84 @@ def register_routes(app):
         """Runs on a background thread (see scheduler.run_in_background),
         AFTER the candidate has already gotten their 'Application
         submitted!' response. This is where the actual Gemini network
-        call happens, so it never blocks the request."""
+        call happens, so it never blocks the request.
+
+        The ENTIRE body is wrapped — any failure anywhere (a bad JOIN, a
+        missing column from an unrun migration, a mailer error, whatever)
+        must end in screening_status='failed' with a real error message,
+        never leave the row stuck at 'processing' forever with no visible
+        reason. A visibly failed screen is fixable; a silently stuck one
+        just looks broken."""
         db.execute("UPDATE applications SET screening_status='processing' WHERE id=%s", (application_id,))
 
-        row = db.query_one(
-            """SELECT a.*, u.id AS candidate_id, u.full_name, u.email,
-                      j.id AS job_id, j.title, j.company_name, j.description,
-                      j.min_match_score, j.test_trigger_mode,
-                      j.jd_required_skills, j.jd_preferred_skills
-               FROM applications a
-               JOIN users u ON u.id = a.candidate_id
-               JOIN jobs j ON j.id = a.job_id
-               WHERE a.id=%s""",
-            (application_id,),
-        )
-        if not row:
-            return
-
-        resume_row = db.query_one("SELECT * FROM resumes WHERE id=%s", (row["resume_id"],))
-        if not resume_row:
-            db.execute(
-                "UPDATE applications SET screening_status='failed', screening_error=%s WHERE id=%s",
-                ("Resume record not found", application_id),
-            )
-            return
-
-        parsed = resume_bank.as_parsed_dict(resume_row)
-        cached_required = row.get("jd_required_skills") or []
-        cached_preferred = row.get("jd_preferred_skills") or []
-        cached_jd_skills = {"required_skills": cached_required, "preferred_skills": cached_preferred} \
-            if (cached_required or cached_preferred) else None
-
         try:
+            row = db.query_one(
+                """SELECT a.*, u.id AS candidate_id, u.full_name, u.email,
+                          j.id AS job_id, j.title, j.company_name, j.description,
+                          j.min_match_score, j.test_trigger_mode,
+                          j.jd_required_skills, j.jd_preferred_skills
+                   FROM applications a
+                   JOIN users u ON u.id = a.candidate_id
+                   JOIN jobs j ON j.id = a.job_id
+                   WHERE a.id=%s""",
+                (application_id,),
+            )
+            if not row:
+                logger.error("Screening job: application %s not found", application_id)
+                return
+
+            resume_row = db.query_one("SELECT * FROM resumes WHERE id=%s", (row["resume_id"],))
+            if not resume_row:
+                db.execute(
+                    "UPDATE applications SET screening_status='failed', screening_error=%s WHERE id=%s",
+                    ("Resume record not found", application_id),
+                )
+                return
+
+            parsed = resume_bank.as_parsed_dict(resume_row)
+            cached_required = row.get("jd_required_skills") or []
+            cached_preferred = row.get("jd_preferred_skills") or []
+            cached_jd_skills = {"required_skills": cached_required, "preferred_skills": cached_preferred} \
+                if (cached_required or cached_preferred) else None
+
             screen = ats_engine.screen_parsed_resume(parsed, row["description"], jd_skills=cached_jd_skills)
+
+            db.execute(
+                """UPDATE applications
+                   SET match_score=%s, technical_match_score=%s, experience_match_score=%s,
+                       soft_skills_score=%s, impact_score=%s, matched_skills=%s, missing_skills=%s,
+                       red_flags=%s, ats_summary=%s, passed_ats=%s, screening_status='done'
+                   WHERE id=%s""",
+                (screen["ats_score"], screen["technical_match_score"], screen["experience_match_score"],
+                 screen["soft_skills_score"], screen["impact_score"],
+                 json.dumps(screen["matched_skills"]), json.dumps(screen["missing_skills"]),
+                 json.dumps(screen["red_flags"]), screen["ats_summary"],
+                 screen["ats_score"] >= (row.get("min_match_score") or 60),
+                 application_id),
+            )
+
+            job = {
+                "id": row["job_id"], "title": row["title"], "company_name": row["company_name"],
+                "description": row["description"], "min_match_score": row["min_match_score"],
+                "test_trigger_mode": row["test_trigger_mode"],
+            }
+            candidate = {"id": row["candidate_id"], "full_name": row["full_name"], "email": row["email"]}
+            skills_for_session = parsed.get("skills", [])
+            # Dispatch (reject email / round1 session+invite) failing should
+            # NOT re-hide a score that was already computed and saved above —
+            # log it, but the application stays 'done' with its real score.
+            try:
+                _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id=row["resume_id"],
+                                       skills=skills_for_session)
+            except Exception as e:
+                logger.error("Dispatch failed for application %s (score was still saved): %s", application_id, e)
+
         except Exception as e:
-            print(f"ATS screening error (application {application_id}): {e}")
+            logger.error("Screening failed for application %s: %s", application_id, e)
             db.execute(
                 "UPDATE applications SET screening_status='failed', screening_error=%s WHERE id=%s",
-                (str(e), application_id),
+                (str(e)[:500], application_id),
             )
-            return
-
-        db.execute(
-            """UPDATE applications
-               SET match_score=%s, technical_match_score=%s, experience_match_score=%s,
-                   soft_skills_score=%s, impact_score=%s, matched_skills=%s, missing_skills=%s,
-                   red_flags=%s, ats_summary=%s, passed_ats=%s, screening_status='done'
-               WHERE id=%s""",
-            (screen["ats_score"], screen["technical_match_score"], screen["experience_match_score"],
-             screen["soft_skills_score"], screen["impact_score"],
-             json.dumps(screen["matched_skills"]), json.dumps(screen["missing_skills"]),
-             json.dumps(screen["red_flags"]), screen["ats_summary"],
-             screen["ats_score"] >= (row.get("min_match_score") or 60),
-             application_id),
-        )
-
-        job = {
-            "id": row["job_id"], "title": row["title"], "company_name": row["company_name"],
-            "description": row["description"], "min_match_score": row["min_match_score"],
-            "test_trigger_mode": row["test_trigger_mode"],
-        }
-        candidate = {"id": row["candidate_id"], "full_name": row["full_name"], "email": row["email"]}
-        skills_for_session = parsed.get("skills", [])
-        _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id=row["resume_id"],
-                               skills=skills_for_session)
 
     def _dispatch_ats_outcome(application_id, job, candidate, screen, resume_id, skills):
         """Implements the employer's configured pipeline once ATS scoring
@@ -639,6 +671,61 @@ def register_routes(app):
             (user_id,),
         )
         return render_template("candidate_applications.html", apps=apps)
+
+    @app.route("/candidate/applications/<int:app_id>")
+    @login_required(role="candidate")
+    def candidate_application_detail(app_id):
+        user_id = session["user_id"]
+        application = db.query_one(
+            """SELECT a.*, j.title, j.company_name, j.location, j.job_type,
+                      j.description, j.min_match_score, j.id AS job_id,
+                      r.filename AS resume_filename, r.id AS resume_id_ref
+               FROM applications a
+               JOIN jobs j ON j.id = a.job_id
+               LEFT JOIN resumes r ON r.id = a.resume_id
+               WHERE a.id = %s AND a.candidate_id = %s""",
+            (app_id, user_id),
+        )
+        if not application:
+            abort(404)
+        for key in ("matched_skills", "missing_skills", "red_flags"):
+            if isinstance(application.get(key), str):
+                try:
+                    application[key] = json.loads(application[key])
+                except (TypeError, ValueError):
+                    application[key] = []
+        return render_template("candidate_application_detail.html", a=application)
+
+    @app.route("/candidate/resumes/<int:resume_id>/file")
+    @login_required(role="candidate")
+    def view_own_resume_file(resume_id):
+        user_id = session["user_id"]
+        resume_row = resume_bank.get(resume_id, candidate_id=user_id)
+        if not resume_row or not resume_row.get("file_path") or not os.path.exists(resume_row["file_path"]):
+            abort(404)
+        download = request.args.get("download") == "1"
+        return send_file(resume_row["file_path"], as_attachment=download,
+                          download_name=resume_row.get("filename") or "resume.pdf")
+
+    @app.route("/employer/resumes/<int:resume_id>/file")
+    @login_required(role="employer")
+    def view_candidate_resume_file(resume_id):
+        employer_id = session["user_id"]
+        # Employers may only view resumes attached to an application on
+        # one of THEIR OWN job postings — never any resume by id.
+        owns = db.query_one(
+            """SELECT 1 FROM applications a JOIN jobs j ON j.id = a.job_id
+               WHERE a.resume_id = %s AND j.employer_id = %s LIMIT 1""",
+            (resume_id, employer_id),
+        )
+        if not owns:
+            abort(403)
+        resume_row = resume_bank.get(resume_id)
+        if not resume_row or not resume_row.get("file_path") or not os.path.exists(resume_row["file_path"]):
+            abort(404)
+        download = request.args.get("download") == "1"
+        return send_file(resume_row["file_path"], as_attachment=download,
+                          download_name=resume_row.get("filename") or "resume.pdf")
 
     @app.route("/candidate/resume-score", methods=["GET", "POST"])
     @login_required(role="candidate")
@@ -1006,13 +1093,41 @@ def register_routes(app):
             website = request.form.get("website", "").strip()
             location = request.form.get("location", "").strip()
             about = request.form.get("about", "").strip()
+            company_size = request.form.get("company_size", "").strip()
+            founded_year = request.form.get("founded_year") or None
+            linkedin_url = request.form.get("linkedin_url", "").strip()
+            twitter_url = request.form.get("twitter_url", "").strip()
+            benefits = request.form.get("benefits", "").strip()
+            tech_stack = request.form.get("tech_stack", "").strip()
 
-            db.execute(
-                """UPDATE company_profiles
-                   SET company_name=%s, industry=%s, website=%s, location=%s, about=%s
-                   WHERE user_id=%s""",
-                (company_name, industry, website, location, about, employer_id),
-            )
+            logo_path = None
+            logo_file = request.files.get("logo")
+            if logo_file and logo_file.filename and allowed_image_file(logo_file.filename):
+                logo_filename = secure_filename(f"logo_{employer_id}_{int(datetime.now().timestamp())}_{logo_file.filename}")
+                logo_full_path = os.path.join(app.config["UPLOAD_FOLDER"], logo_filename)
+                logo_file.save(logo_full_path)
+                logo_path = logo_filename
+
+            if logo_path:
+                db.execute(
+                    """UPDATE company_profiles
+                       SET company_name=%s, industry=%s, website=%s, location=%s, about=%s,
+                           company_size=%s, founded_year=%s, linkedin_url=%s, twitter_url=%s,
+                           benefits=%s, tech_stack=%s, logo_path=%s
+                       WHERE user_id=%s""",
+                    (company_name, industry, website, location, about, company_size, founded_year,
+                     linkedin_url, twitter_url, benefits, tech_stack, logo_path, employer_id),
+                )
+            else:
+                db.execute(
+                    """UPDATE company_profiles
+                       SET company_name=%s, industry=%s, website=%s, location=%s, about=%s,
+                           company_size=%s, founded_year=%s, linkedin_url=%s, twitter_url=%s,
+                           benefits=%s, tech_stack=%s
+                       WHERE user_id=%s""",
+                    (company_name, industry, website, location, about, company_size, founded_year,
+                     linkedin_url, twitter_url, benefits, tech_stack, employer_id),
+                )
             flash("Company profile updated.", "success")
             return redirect(url_for("company_profile"))
 
@@ -1470,4 +1585,4 @@ def register_routes(app):
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=app.debug, port=int(os.environ.get("PORT", 5001)))
