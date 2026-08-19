@@ -1,43 +1,93 @@
-{% extends "test_base.html" %}
-{% block title %}Pre-Flight Check — Round 1{% endblock %}
+{% extends "test_base.html" %} {% block title %}Before you begin{% endblock %}
 {% block content %}
 <div class="card">
-  <h2 style="font-size:20px;margin-bottom:10px;">Before you begin: Pre-Flight Check</h2>
-  <p style="color:var(--muted);font-size:13.5px;line-height:1.6;margin-bottom:22px;">
-    This assessment is monitored to keep it fair for every candidate. Please read
-    and confirm the following before you start.
+  <h2 style="font-size: 19px; margin-bottom: 10px; font-weight: 700">
+    Before you begin
+  </h2>
+  <p
+    style="
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+      margin-bottom: 22px;
+    "
+  >
+    This assessment is proctored to keep results fair and comparable across
+    every candidate. Please read the following before you start.
   </p>
 
-  <ul style="color:var(--text);font-size:13.5px;line-height:2;margin-bottom:24px;padding-left:20px;">
-    <li>The test runs in <strong>full-screen mode</strong>. Exiting full-screen, switching
-      tabs, or minimizing the window is logged.</li>
-    <li><strong>Copy and paste are disabled</strong> during the test.</li>
-    <li>You'll get <strong>3 warnings</strong> for the above — a 4th ends the test.</li>
-    <li>Your typing rhythm is measured against a short calibration sentence below,
-      to help verify answers are your own.</li>
-    <li>Set aside about 25–30 minutes, uninterrupted.</li>
+  <ul class="preflight-list">
+    <li>
+      The assessment runs in <strong>full-screen mode</strong> for its full
+      duration.
+    </li>
+    <li>
+      Leaving full-screen, switching tabs, or copy/paste are all monitored.
+    </li>
+    <li>
+      You'll receive up to <strong>3 warnings</strong> — a 4th ends the
+      assessment.
+    </li>
+    <li>
+      There are <strong>3 short sections</strong>; plan for about 25&ndash;30
+      minutes.
+    </li>
+    <li>Find a quiet space with a stable connection before you begin.</li>
   </ul>
 
   <div id="calibration-step">
-    <label for="calib-text">Type this sentence exactly to calibrate:</label>
-    <p style="font-family:var(--mono);font-size:13px;color:var(--accent);margin-bottom:10px;">
+    <label for="calib-text">Type the sentence below exactly as shown:</label>
+    <p class="calib-target">
       "I confirm that I am taking this assessment honestly."
     </p>
-    <textarea id="calib-text" rows="2" placeholder="Start typing here…" autocomplete="off"></textarea>
-    <p id="calib-status" style="font-size:12px;color:var(--muted);margin-top:8px;"></p>
+    <textarea
+      id="calib-text"
+      rows="2"
+      placeholder="Start typing here…"
+      autocomplete="off"
+    ></textarea>
+    <p
+      id="calib-status"
+      style="font-size: 12px; color: var(--muted2); margin-top: 8px"
+    ></p>
   </div>
 
-  <form id="preflight-form" method="POST" action="{{ url_for('submit_preflight', session_id=test_session.id) }}" style="margin-top:26px;">
-    <input type="hidden" name="flight_times" id="flight_times">
-    <input type="hidden" name="dwell_times" id="dwell_times">
-    <input type="hidden" name="typed_text" id="typed_text">
-    <input type="hidden" name="elapsed_ms" id="elapsed_ms">
-    <button type="button" id="start-btn" class="btn" disabled>Enter Full-Screen &amp; Begin</button>
+  <form
+    id="preflight-form"
+    method="POST"
+    action="{{ url_for('submit_preflight', session_id=test_session.id) }}"
+    style="margin-top: 24px"
+  >
+    <input type="hidden" name="flight_times" id="flight_times" />
+    <input type="hidden" name="dwell_times" id="dwell_times" />
+    <input type="hidden" name="typed_text" id="typed_text" />
+    <input type="hidden" name="elapsed_ms" id="elapsed_ms" />
+    <button type="button" id="start-btn" class="btn" disabled>
+      Enter Full-Screen &amp; Begin
+    </button>
   </form>
 </div>
-{% endblock %}
-
-{% block extra_script %}
+{% endblock %} {% block extra_style %}
+<style>
+  .preflight-list {
+    color: var(--text);
+    font-size: 13.5px;
+    line-height: 2;
+    margin-bottom: 26px;
+    padding-left: 20px;
+  }
+  .calib-target {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-light);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+</style>
+{% endblock %} {% block extra_script %}
 <script>
   const calibText = document.getElementById("calib-text");
   const target = "I confirm that I am taking this assessment honestly.";
@@ -54,8 +104,8 @@
   calibText.addEventListener("input", function () {
     const val = calibText.value.trim();
     if (val.length >= target.length - 3) {
-      statusEl.textContent = "Calibration captured. You're ready to begin.";
-      statusEl.style.color = "var(--accent)";
+      statusEl.textContent = "Ready — you can begin now.";
+      statusEl.style.color = "var(--success)";
       startBtn.disabled = false;
     } else {
       statusEl.textContent = `${val.length}/${target.length} characters…`;
@@ -65,10 +115,16 @@
 
   startBtn.addEventListener("click", function () {
     const metrics = AntiCheat.getKeystrokeMetrics(calibText);
-    document.getElementById("flight_times").value = JSON.stringify(metrics.flight_times);
-    document.getElementById("dwell_times").value = JSON.stringify(metrics.dwell_times);
+    document.getElementById("flight_times").value = JSON.stringify(
+      metrics.flight_times
+    );
+    document.getElementById("dwell_times").value = JSON.stringify(
+      metrics.dwell_times
+    );
     document.getElementById("typed_text").value = calibText.value;
-    document.getElementById("elapsed_ms").value = startTime ? (performance.now() - startTime) : 1000;
+    document.getElementById("elapsed_ms").value = startTime
+      ? performance.now() - startTime
+      : 1000;
 
     AntiCheat.requestFullscreen();
     setTimeout(function () {

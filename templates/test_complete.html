@@ -1,22 +1,56 @@
-{% extends "test_base.html" %}
-{% block title %}Assessment Complete{% endblock %}
-{% block content %}
-<div class="card" style="text-align:center;">
-  <div style="font-size:40px;margin-bottom:14px;">🎉</div>
-  <h2 style="font-size:20px;margin-bottom:12px;">Assessment Complete!</h2>
-  <p style="color:var(--text);font-size:14.5px;line-height:1.8;max-width:480px;margin:0 auto 16px;">
-    {% if top_skills %}
-      You showcased strong concepts in <strong>{{ top_skills | join(' and ') }}</strong>.
-    {% else %}
-      You showed solid, grounded answers throughout.
-    {% endif %}
-    We've sent your verified profile to the employer.
+{% extends "test_base.html" %} {% block title %}Assessment Complete{% endblock
+%} {% block content %}
+<div class="card status-card">
+  <div class="status-icon success">&#10003;</div>
+  <h2 style="font-size: 20px; margin-bottom: 12px; font-weight: 700">
+    Assessment complete!
+  </h2>
+  <p
+    style="
+      color: var(--text);
+      font-size: 14.5px;
+      line-height: 1.8;
+      max-width: 440px;
+      margin: 0 auto 8px;
+    "
+  >
+    {% if top_skills %} You showed strong, specific answers around
+    <strong>{{ top_skills | join(' and ') }}</strong>. {% else %} You gave
+    clear, well-supported answers throughout. {% endif %} Your verified profile
+    has been sent to the employer.
   </p>
-  <p style="color:var(--muted);font-size:13px;">
-    They'll be in touch with next steps. You can safely close this tab now.
+  <p style="color: var(--muted); font-size: 13px; margin-top: 14px">
+    They'll follow up with next steps. You can safely close this tab now.
   </p>
 </div>
 <script>
-  if (document.fullscreenElement) { document.exitFullscreen().catch(()=>{}); }
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(function () {});
+  }
 </script>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .status-icon.neutral {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+</style>
 {% endblock %}

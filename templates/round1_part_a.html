@@ -1,36 +1,104 @@
-{% extends "test_base.html" %}
-{% block title %}Round 1 · Part A · Question {{ q_number }}{% endblock %}
-{% block header_right %}
-<div class="progress-pill">Part A (Skills MCQ) · Question {{ q_number }} / {{ q_total }}</div>
-{% endblock %}
-{% block content %}
-<div class="timer" id="timer">--:--</div>
+{% extends "test_base.html" %} {% block title %}Section 1 · Question {{ q_number
+}}{% endblock %} {% block header_right %}
+<div class="section-pill">
+  Section 1 of 3 &middot; Question {{ q_number }} / {{ q_total }}
+</div>
+{% endblock %} {% block content %}
+<div class="progress-track">
+  <div
+    class="progress-fill"
+    style="width:{{ (q_number / q_total * 100) | round | int }}%;"
+  ></div>
+</div>
+<div class="timer-row" id="timer">
+  <span class="timer-dot"></span><span id="timer-text">--:--</span>
+</div>
+
 <div class="card">
-  <div style="font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">
-    {{ question.skill }} · {{ question.difficulty | upper }}
-  </div>
-  <h2 style="font-size:17px;line-height:1.5;margin-bottom:8px;">{{ question.question }}</h2>
+  <div class="q-label">{{ question.skill }}</div>
+  <h2
+    style="
+      font-size: 17.5px;
+      line-height: 1.55;
+      margin-bottom: 10px;
+      font-weight: 600;
+    "
+  >
+    {{ question.question }}
+  </h2>
   {% if question.code %}
-  <pre style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:12.5px;overflow-x:auto;margin:14px 0;">{{ question.code }}</pre>
+  <pre
+    style="
+      background: #fbfbfe;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      overflow-x: auto;
+      margin: 16px 0;
+    "
+  >
+{{ question.code }}</pre
+  >
   {% endif %}
 
-  <form id="mcq-form" method="POST" action="{{ url_for('round1_part_a_answer', session_id=test_session.id) }}" style="margin-top:20px;">
-    <input type="hidden" name="time_taken_seconds" id="time_taken_seconds">
-    <div id="options" style="display:flex;flex-direction:column;gap:10px;">
-      {% for opt in question.options %}
-      {% set letter = ['A','B','C','D','E','F'][loop.index0] %}
-      <label style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:13.5px;">
-        <input type="radio" name="selected_option" value="{{ letter }}" style="accent-color:var(--accent);" {% if loop.first %}required{% endif %}>
-        <span><strong style="color:var(--accent);">{{ letter }}.</strong> {{ opt }}</span>
+  <form
+    id="mcq-form"
+    method="POST"
+    action="{{ url_for('round1_part_a_answer', session_id=test_session.id) }}"
+    style="margin-top: 22px"
+  >
+    <input type="hidden" name="time_taken_seconds" id="time_taken_seconds" />
+    <div id="options" style="display: flex; flex-direction: column; gap: 10px">
+      {% for opt in question.options %} {% set letter =
+      ['A','B','C','D','E','F'][loop.index0] %}
+      <label class="option-row">
+        <input
+          type="radio"
+          name="selected_option"
+          value="{{ letter }}"
+          {%
+          if
+          loop.first
+          %}required{%
+          endif
+          %}
+        />
+        <span
+          ><strong style="color: var(--accent)">{{ letter }}.</strong>&nbsp; {{
+          opt }}</span
+        >
       </label>
       {% endfor %}
     </div>
-    <button type="submit" class="btn" style="margin-top:24px;">Submit Answer</button>
+    <button type="submit" class="btn" style="margin-top: 26px">Continue</button>
   </form>
 </div>
-{% endblock %}
-
-{% block extra_script %}
+{% endblock %} {% block extra_style %}
+<style>
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .option-row:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+  .option-row input[type="radio"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+  }
+</style>
+{% endblock %} {% block extra_script %}
 <script>
   AntiCheat.initLockdown("{{ test_session.id }}", {
     onTerminate: function () { window.location.href = "{{ url_for('test_graceful_exit', session_id=test_session.id) }}"; }
@@ -38,15 +106,16 @@
 
   const TIME_LIMIT = {{ question.estimated_time_seconds or 60 }};
   let remaining = TIME_LIMIT;
-  const timerEl = document.getElementById("timer");
+  const timerRow = document.getElementById("timer");
+  const timerText = document.getElementById("timer-text");
   const startedAt = performance.now();
 
   function tick() {
     remaining -= 1;
     const m = Math.floor(Math.max(remaining, 0) / 60).toString().padStart(2, "0");
     const s = Math.max(remaining, 0) % 60;
-    timerEl.textContent = m + ":" + s.toString().padStart(2, "0");
-    if (remaining <= 10) timerEl.classList.add("urgent");
+    timerText.textContent = m + ":" + s.toString().padStart(2, "0");
+    if (remaining <= 10) timerRow.classList.add("urgent");
     if (remaining <= 0) {
       clearInterval(interval);
       submitForm();

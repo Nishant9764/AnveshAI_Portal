@@ -1,0 +1,146 @@
+{% extends "dashboard_base.html" %}
+{% block title %}{{ a.full_name }} — Applicant Detail - Anvesh AI{% endblock %}
+{% block page_title %}Applicant Detail{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<a href="{{ url_for('employer_applicants') }}" style="font-size:13px;color:#888;">&larr; Back to Applicants</a>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;max-width:960px;">
+
+  <!-- Candidate + resume summary -->
+  <div class="card">
+    <div class="card-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="avatar-circle" style="width:40px;height:40px;">{{ a.avatar_initials or a.full_name[0] }}</div>
+        <div>
+          <h3 style="margin:0;">{{ a.full_name }}</h3>
+          <p style="font-size:12.5px;color:#888;margin:0;">{{ a.email }}</p>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:#666;margin:12px 0;">Applied for <strong>{{ a.job_title }}</strong></p>
+
+    {% if a.resume_id_ref %}
+    <div style="display:flex;gap:8px;margin-bottom:18px;">
+      <a href="{{ url_for('view_candidate_resume_file', resume_id=a.resume_id_ref) }}" target="_blank" class="btn btn-outline btn-sm">View Resume</a>
+      <a href="{{ url_for('view_candidate_resume_file', resume_id=a.resume_id_ref) }}?download=1" class="btn btn-outline btn-sm">Download</a>
+    </div>
+    {% endif %}
+
+    <h4 style="font-size:13.5px;margin-bottom:10px;">Resume Summary</h4>
+    <div style="font-size:12.5px;color:#666;margin-bottom:14px;">
+        {{ a.resume_experience_yrs if a.resume_experience_yrs else '—' }} yrs experience &middot;
+        {{ (a.resume_experience or []) | length }} role{{ 's' if (a.resume_experience or [])|length != 1 else '' }} &middot;
+        {{ (a.resume_projects or []) | length }} project{{ 's' if (a.resume_projects or [])|length != 1 else '' }}
+    </div>
+
+    {% if a.resume_skills %}
+    <p style="font-size:12px;font-weight:600;color:#444;margin-bottom:6px;">All skills on resume</p>
+    <div class="job-tags" style="margin-bottom:16px;">
+        {% for s in a.resume_skills %}
+        <span class="tag" style="{% if s in (a.matched_skills or []) %}background:#ecfdf5;color:#16a34a;{% endif %}">{{ s }}</span>
+        {% endfor %}
+    </div>
+    <p style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:16px;">Green = matched against this job's requirements</p>
+    {% endif %}
+
+    {% if a.resume_experience %}
+    <p style="font-size:12px;font-weight:600;color:#444;margin-bottom:6px;">Experience</p>
+    <ul style="font-size:12.5px;color:#555;line-height:1.7;margin:0 0 16px 18px;">
+        {% for e in a.resume_experience %}
+        <li>{{ e.role or 'Role' }}{% if e.duration %} &middot; {{ e.duration }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if a.resume_projects %}
+    <p style="font-size:12px;font-weight:600;color:#444;margin-bottom:6px;">Projects</p>
+    <ul style="font-size:12.5px;color:#555;line-height:1.7;margin:0 0 0 18px;">
+        {% for p in a.resume_projects %}
+        <li><strong>{{ p.name or 'Project' }}</strong>{% if p.technologies %} — {{ p.technologies | join(', ') }}{% endif %}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+
+  <!-- ATS + Round 1 scorecard -->
+  <div class="card">
+    <div class="card-header"><h3>Screening Scorecard</h3></div>
+
+    {% if a.screening_status in ('pending', 'processing') %}
+    <p style="font-size:13px;color:#888;">Still scoring…</p>
+    {% elif a.screening_status == 'failed' %}
+    <p style="font-size:13px;color:#c0392b;">Scoring failed: {{ a.screening_error or 'unknown error' }}</p>
+    {% else %}
+    <div style="text-align:center;margin-bottom:18px;">
+        {% set m = a.match_score or 0 %}
+        <div style="font-size:32px;font-weight:700;color:{{ '#16a34a' if m >= 75 else ('#c98a1f' if m >= 50 else '#c0392b') }};">{{ m }}%</div>
+        <div style="font-size:12px;color:#888;">ATS Match &middot; {{ 'Passed baseline' if a.passed_ats else ('Below ' ~ a.min_match_score ~ '% baseline') }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;color:#555;margin-bottom:16px;">
+        <div>Technical: <strong>{{ a.technical_match_score if a.technical_match_score is not none else '—' }}</strong></div>
+        <div>Experience: <strong>{{ a.experience_match_score if a.experience_match_score is not none else '—' }}</strong></div>
+        <div>Soft skills: <strong>{{ a.soft_skills_score if a.soft_skills_score is not none else '—' }}</strong></div>
+        <div>Impact: <strong>{{ a.impact_score if a.impact_score is not none else '—' }}</strong></div>
+    </div>
+    {% if a.ats_summary %}
+    <p style="font-size:12.5px;color:#666;line-height:1.6;margin-bottom:14px;">{{ a.ats_summary }}</p>
+    {% endif %}
+    {% if a.missing_skills %}
+    <p style="font-size:12px;font-weight:600;color:#c98a1f;margin-bottom:6px;">Missing required skills</p>
+    <div class="job-tags" style="margin-bottom:14px;">
+        {% for s in a.missing_skills %}<span class="tag" style="background:#fffbeb;color:#c98a1f;">{{ s }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    {% if a.red_flags %}
+    <p style="font-size:12px;font-weight:600;color:#c0392b;margin-bottom:6px;">Red flags</p>
+    <ul style="font-size:12px;color:#c0392b;line-height:1.7;margin:0 0 14px 18px;">
+        {% for f in a.red_flags %}<li>{{ f }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% endif %}
+
+    {% if a.round1_score is not none %}
+    <hr style="margin:18px 0;border:none;border-top:1px solid #eee;">
+    <h4 style="font-size:13.5px;margin-bottom:8px;">Round 1 Assessment</h4>
+    <div style="font-size:13px;color:#444;margin-bottom:6px;">
+        Overall: <strong>{{ a.round1_score }}%</strong> &middot; {{ a.round1_verdict }}
+    </div>
+    <div style="font-size:12px;color:#888;line-height:1.8;">
+        {% if a.mcq_pct is not none %}Skills MCQ: {{ a.mcq_pct }}% ({{ a.mcq_correct }}/{{ a.mcq_total }})<br>{% else %}Skills MCQ: not available for this candidate's skill set<br>{% endif %}
+        {% if a.round2_score is not none %}Experience & Projects: {{ a.round2_score }}%<br>{% endif %}
+        {% if a.round3_score is not none %}Role Fit (JD): {{ a.round3_score }}%<br>{% endif %}
+    </div>
+    {% if a.session_integrity_score is not none %}
+    <p style="font-size:12px;margin-top:10px;">
+        Integrity: <a href="{{ url_for('applicant_integrity_report', app_id=a.id) }}" style="color:{{ '#1a7f4b' if a.session_integrity_score >= 90 else ('#c98a1f' if a.session_integrity_score >= 65 else '#c0392b') }};">{{ a.session_integrity_score }}/100</a>
+        {% if a.warnings_count %} &middot; {{ a.warnings_count }} warning{{ 's' if a.warnings_count != 1 else '' }}{% endif %}
+    </p>
+    {% endif %}
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('update_applicant_status', app_id=a.id) }}" style="margin-top:18px;">
+        <label style="font-size:12px;color:#888;margin-bottom:6px;display:block;">Status</label>
+        <select name="status" class="form-control" onchange="this.form.submit()">
+            {% for s in ['Applied', 'Shortlisted', 'Interview', 'Offered', 'Rejected'] %}
+            <option value="{{ s }}" {{ 'selected' if a.status == s else '' }}>{{ s }}</option>
+            {% endfor %}
+        </select>
+    </form>
+    {% if a.invite_status == 'manual_hold' %}
+    <form method="POST" action="{{ url_for('send_invite_now', app_id=a.id) }}" style="margin-top:8px;">
+        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;">Send Round 1 Invite</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
