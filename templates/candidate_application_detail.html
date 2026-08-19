@@ -1,0 +1,177 @@
+{% extends "dashboard_base.html" %} {% block title %}{{ a.title }} — Application
+Detail - Anvesh AI{% endblock %} {% block page_title %}Application Detail{%
+endblock %} {% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"
+  ><span class="nav-icon">&#8962;</span> Home</a
+>
+<a href="{{ url_for('candidate_jobs') }}"
+  ><span class="nav-icon">&#128203;</span> Jobs Feed</a
+>
+<a href="{{ url_for('saved_jobs_page') }}"
+  ><span class="nav-icon">&#9734;</span> Saved Jobs</a
+>
+<a href="{{ url_for('candidate_applications') }}" class="active"
+  ><span class="nav-icon">&#128196;</span> My Applications</a
+>
+<a href="{{ url_for('resume_score') }}"
+  ><span class="nav-icon">&#128202;</span> Resume Score</a
+>
+<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"
+  ><span class="nav-icon">&#128100;</span> Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">&#9881;</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %}
+<a
+  href="{{ url_for('candidate_applications') }}"
+  style="font-size: 13px; color: #888"
+  >&larr; Back to My Applications</a
+>
+
+<div class="card" style="max-width: 720px; margin-top: 16px">
+  <div class="card-header">
+    <h3>{{ a.title }}</h3>
+    <p style="color: #888; font-size: 13px">
+      {{ a.company_name }} &middot; {{ a.location }} &middot; {{ a.job_type }}
+    </p>
+  </div>
+
+  <div
+    style="
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 14px 0 22px;
+      flex-wrap: wrap;
+    "
+  >
+    <span
+      class="status-chip"
+      style="{% if a.status|lower == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}"
+    >
+      {{ a.status }}
+    </span>
+    {% if a.resume_id_ref %}
+    <a
+      href="{{ url_for('view_own_resume_file', resume_id=a.resume_id_ref) }}"
+      target="_blank"
+      class="btn btn-outline btn-sm"
+      >View Submitted Resume</a
+    >
+    <a
+      href="{{ url_for('view_own_resume_file', resume_id=a.resume_id_ref) }}?download=1"
+      class="btn btn-outline btn-sm"
+      >Download</a
+    >
+    {% endif %}
+  </div>
+
+  {% if a.screening_status in ('pending', 'processing') %}
+  <div class="empty-state" style="padding: 30px 0">
+    <p style="font-size: 13.5px; color: #666">
+      Still scoring your resume against this job — check back shortly.
+    </p>
+  </div>
+  {% elif a.screening_status == 'failed' %}
+  <div class="empty-state" style="padding: 30px 0">
+    <p style="font-size: 13.5px; color: #c0392b">
+      Automated scoring hit an error and needs a retry. If this doesn't resolve,
+      reach out to the employer directly.
+    </p>
+  </div>
+  {% else %}
+  <h4 style="font-size: 14px; margin-bottom: 10px">
+    Match Score: {{ a.match_score }}%
+  </h4>
+  <div
+    style="
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 18px;
+    "
+  >
+    <div>
+      Technical match:
+      <strong
+        >{{ a.technical_match_score if a.technical_match_score is not none else
+        '—' }}/100</strong
+      >
+    </div>
+    <div>
+      Experience match:
+      <strong
+        >{{ a.experience_match_score if a.experience_match_score is not none
+        else '—' }}/100</strong
+      >
+    </div>
+    <div>
+      Soft skills:
+      <strong
+        >{{ a.soft_skills_score if a.soft_skills_score is not none else '—'
+        }}/100</strong
+      >
+    </div>
+    <div>
+      Quantified impact:
+      <strong
+        >{{ a.impact_score if a.impact_score is not none else '—' }}/100</strong
+      >
+    </div>
+  </div>
+
+  {% if a.ats_summary %}
+  <p
+    style="font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 18px"
+  >
+    {{ a.ats_summary }}
+  </p>
+  {% endif %} {% if a.matched_skills %}
+  <p
+    style="
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #16a34a;
+      margin-bottom: 6px;
+    "
+  >
+    Matched skills
+  </p>
+  <div class="job-tags" style="margin-bottom: 16px">
+    {% for s in a.matched_skills %}<span
+      class="tag"
+      style="background: #ecfdf5; color: #16a34a"
+      >{{ s }}</span
+    >{% endfor %}
+  </div>
+  {% endif %} {% if a.missing_skills %}
+  <p
+    style="
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #c98a1f;
+      margin-bottom: 6px;
+    "
+  >
+    Skills to strengthen
+  </p>
+  <div class="job-tags" style="margin-bottom: 16px">
+    {% for s in a.missing_skills %}<span
+      class="tag"
+      style="background: #fffbeb; color: #c98a1f"
+      >{{ s }}</span
+    >{% endfor %}
+  </div>
+  {% endif %} {% if a.round1_score is not none %}
+  <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee" />
+  <h4 style="font-size: 14px; margin-bottom: 8px">
+    Round 1 Assessment: {{ a.round1_score }}%
+  </h4>
+  <p style="font-size: 12.5px; color: #888">{{ a.round1_verdict }}</p>
+  {% endif %} {% endif %}
+</div>
+{% endblock %}

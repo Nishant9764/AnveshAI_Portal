@@ -16,9 +16,18 @@
 {% block dashboard_content %}
 <div class="settings-card">
     <h3>Company profile</h3>
-    <p class="settings-subtitle">This information appears on your job listings.</p>
+    <p class="settings-subtitle">This is what candidates see before they commit 20+ minutes to your assessment — worth filling in properly.</p>
 
-    <form method="POST" action="{{ url_for('company_profile') }}">
+    <form method="POST" action="{{ url_for('company_profile') }}" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="logo">Company logo</label>
+            {% if profile and profile.logo_path %}
+            <div style="margin-bottom:8px;">
+                <img src="{{ url_for('static', filename='uploads/' ~ profile.logo_path) }}" alt="Current logo" style="height:48px;border-radius:8px;">
+            </div>
+            {% endif %}
+            <input type="file" id="logo" name="logo" class="form-control" accept=".png,.jpg,.jpeg,.webp,.svg">
+        </div>
         <div class="form-group">
             <label for="company_name">Company name</label>
             <input type="text" id="company_name" name="company_name" class="form-control"
@@ -36,14 +45,52 @@
                        value="{{ profile.location if profile else '' }}" placeholder="e.g. Bangalore, India">
             </div>
         </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="company_size">Company size</label>
+                <select id="company_size" name="company_size" class="form-control">
+                    {% set current_size = profile.company_size if profile else '' %}
+                    <option value="">Select size</option>
+                    {% for size in ['1-10', '11-50', '51-200', '201-500', '501-1000', '1000+'] %}
+                    <option value="{{ size }}" {{ 'selected' if current_size == size else '' }}>{{ size }} employees</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="founded_year">Founded year</label>
+                <input type="number" id="founded_year" name="founded_year" class="form-control"
+                       value="{{ profile.founded_year if profile and profile.founded_year else '' }}" placeholder="e.g. 2018" min="1900" max="2026">
+            </div>
+        </div>
         <div class="form-group">
             <label for="website">Website</label>
             <input type="text" id="website" name="website" class="form-control"
                    value="{{ profile.website if profile else '' }}" placeholder="https://yourcompany.com">
         </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="linkedin_url">LinkedIn</label>
+                <input type="text" id="linkedin_url" name="linkedin_url" class="form-control"
+                       value="{{ profile.linkedin_url if profile else '' }}" placeholder="https://linkedin.com/company/...">
+            </div>
+            <div class="form-group">
+                <label for="twitter_url">X / Twitter</label>
+                <input type="text" id="twitter_url" name="twitter_url" class="form-control"
+                       value="{{ profile.twitter_url if profile else '' }}" placeholder="https://x.com/...">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="tech_stack">Tech stack you work with (comma separated)</label>
+            <input type="text" id="tech_stack" name="tech_stack" class="form-control"
+                   value="{{ profile.tech_stack if profile else '' }}" placeholder="Python, React, AWS, Postgres">
+        </div>
         <div class="form-group">
             <label for="about">About the company</label>
             <textarea id="about" name="about" class="form-control" placeholder="Tell candidates about your company...">{{ profile.about if profile else '' }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="benefits">Benefits &amp; perks</label>
+            <textarea id="benefits" name="benefits" class="form-control" placeholder="Health insurance, remote-friendly, learning budget, equity...">{{ profile.benefits if profile else '' }}</textarea>
         </div>
         <button type="submit" class="btn btn-primary">Save changes</button>
     </form>
