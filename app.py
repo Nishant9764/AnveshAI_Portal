@@ -266,12 +266,12 @@ def register_routes(app):
                ORDER BY posted_at DESC LIMIT 60"""
         )
         # Personalize: rank by overlap with the candidate's skills/interests,
-        # not just recency. Jobs already applied to are pushed out of the
-        # top-6 "recommended for you" feed.
+        # not just recency. Jobs already applied to sink to the end of the
+        # feed (not hidden — the candidate can still see/revisit them) with
+        # their "Apply" button swapped for an "Applied" state in the template.
         ranked = sorted(
-            (j for j in all_active if j["id"] not in already_applied_ids),
-            key=lambda j: _skill_overlap_rank(j["tech_stack"], candidate_stack),
-            reverse=True,
+            all_active,
+            key=lambda j: (j["id"] in already_applied_ids, -_skill_overlap_rank(j["tech_stack"], candidate_stack)),
         )
         jobs = ranked[:6]
 
@@ -303,6 +303,7 @@ def register_routes(app):
             profile=profile,
             jobs=jobs,
             saved_job_ids=saved_job_ids,
+            applied_job_ids=already_applied_ids,
             stats=stats,
         )
 
@@ -326,14 +327,20 @@ def register_routes(app):
 
         jobs = db.query_all(sql, params)
 
+        applied_job_ids = {
+            row["job_id"] for row in db.query_all(
+                "SELECT job_id FROM applications WHERE candidate_id = %s", (user_id,)
+            )
+        }
         profile = db.query_one("SELECT * FROM candidate_profiles WHERE user_id = %s", (user_id,))
         candidate_stack = ((profile.get("tech_stack") if profile else "") or "") + "," + \
                            ((profile.get("interests") if profile else "") or "")
         for j in jobs:
             j["_overlap"] = _skill_overlap_rank(j["tech_stack"], candidate_stack)
         # Personalized ranking: best-matching jobs first (skills/interests
-        # overlap), recency as tiebreak within equal relevance.
-        jobs.sort(key=lambda j: j["_overlap"], reverse=True)
+        # overlap); jobs already applied to sink to the end of the feed
+        # regardless of match strength, rather than disappearing entirely.
+        jobs.sort(key=lambda j: (j["id"] in applied_job_ids, -j["_overlap"]))
         if match_only:
             jobs = [j for j in jobs if j["_overlap"] > 0]
 
@@ -658,7 +665,13 @@ def register_routes(app):
                WHERE s.candidate_id = %s ORDER BY s.saved_at DESC""",
             (user_id,),
         )
-        return render_template("candidate_saved_jobs.html", jobs=jobs, saved_job_ids={j["id"] for j in jobs})
+        applied_job_ids = {
+            row["job_id"] for row in db.query_all(
+                "SELECT job_id FROM applications WHERE candidate_id = %s", (user_id,)
+            )
+        }
+        return render_template("candidate_saved_jobs.html", jobs=jobs, saved_job_ids={j["id"] for j in jobs},
+                                applied_job_ids=applied_job_ids)
 
     @app.route("/candidate/applications")
     @login_required(role="candidate")
@@ -1002,6 +1015,37 @@ def register_routes(app):
                         a[key] = []
         return render_template("employer_applicants.html", applicants=applicants)
 
+    @app.route("/employer/applicants/<int:app_id>")
+    @login_required(role="employer")
+    def employer_applicant_detail(app_id):
+        employer_id = session["user_id"]
+        a = db.query_one(
+            """SELECT a.*, u.full_name, u.email, u.avatar_initials,
+                      j.title AS job_title, j.min_match_score, j.test_trigger_mode, j.id AS job_id,
+                      s.integrity_score AS session_integrity_score, s.warnings_count,
+                      s.mcq_pct, s.mcq_total, s.mcq_correct,
+                      r.id AS resume_id_ref, r.filename AS resume_filename,
+                      r.skills AS resume_skills, r.experience AS resume_experience,
+                      r.projects AS resume_projects, r.experience_yrs AS resume_experience_yrs
+               FROM applications a
+               JOIN jobs j ON j.id = a.job_id
+               JOIN users u ON u.id = a.candidate_id
+               LEFT JOIN sessions s ON s.id = a.round1_session_id
+               LEFT JOIN resumes r ON r.id = a.resume_id
+               WHERE a.id = %s AND j.employer_id = %s""",
+            (app_id, employer_id),
+        )
+        if not a:
+            abort(404)
+        for key in ("matched_skills", "missing_skills", "red_flags",
+                    "resume_skills", "resume_experience", "resume_projects"):
+            if isinstance(a.get(key), str):
+                try:
+                    a[key] = json.loads(a[key])
+                except (TypeError, ValueError):
+                    a[key] = []
+        return render_template("employer_applicant_detail.html", a=a)
+
     @app.route("/employer/applicants/<int:app_id>/status", methods=["POST"])
     @login_required(role="employer")
     def update_applicant_status(app_id):
@@ -1042,32 +1086,6 @@ def register_routes(app):
                             "UPDATE applications SET rejection_emailed_at=NOW() WHERE id=%s", (app_id,)
                         )
             flash("Applicant status updated.", "success")
-        return redirect(url_for("employer_applicants"))
-
-    @app.route("/employer/applicants/<int:app_id>/unlock-round2", methods=["POST"])
-    @login_required(role="employer")
-    def unlock_round2(app_id):
-        employer_id = session["user_id"]
-        row = db.query_one(
-            """SELECT a.id FROM applications a JOIN jobs j ON j.id=a.job_id
-               WHERE a.id=%s AND j.employer_id=%s""", (app_id, employer_id),
-        )
-        if row:
-            db.execute("UPDATE applications SET round2_unlocked=TRUE WHERE id=%s", (app_id,))
-            flash("Round 2 (project/experience deep dive) unlocked for this candidate.", "success")
-        return redirect(url_for("employer_applicants"))
-
-    @app.route("/employer/applicants/<int:app_id>/unlock-round3", methods=["POST"])
-    @login_required(role="employer")
-    def unlock_round3(app_id):
-        employer_id = session["user_id"]
-        row = db.query_one(
-            """SELECT a.id FROM applications a JOIN jobs j ON j.id=a.job_id
-               WHERE a.id=%s AND j.employer_id=%s""", (app_id, employer_id),
-        )
-        if row:
-            db.execute("UPDATE applications SET round3_unlocked=TRUE WHERE id=%s", (app_id,))
-            flash("Round 3 (JD fit testing) unlocked for this candidate.", "success")
         return redirect(url_for("employer_applicants"))
 
     @app.route("/employer/applicants/<int:app_id>/integrity-report")
@@ -1233,7 +1251,7 @@ def register_routes(app):
             return redirect(url_for("test_start", invite_token=test_session["invite_token"]))
 
         state = models.get_test_state(session_id)
-        if not state["mcq_bank"]:
+        if not state["mcq_bank"] and state["mcq_idx"] == 0:
             candidate = db.query_one(
                 "SELECT technical_match_score, experience_match_score FROM applications WHERE id=%s",
                 (test_session["application_id"],),
@@ -1242,6 +1260,19 @@ def register_routes(app):
                 candidate["technical_match_score"] or 50, candidate["experience_match_score"] or 50
             ) if candidate else "mid"
             questions = question_bank.select_round1_mcqs(test_session["skills_tested"], seniority)
+
+            if not questions:
+                # No MCQs available for this candidate's skills (an unseeded
+                # or thin question bank) — this is a gap in the employer's
+                # data, not a reason to penalize or reject the candidate.
+                # Skip sub-round 1 entirely and move straight to sub-round 2.
+                logger.warning(
+                    "No MCQs found for session %s (skills=%s) — skipping sub-round 1",
+                    session_id, test_session["skills_tested"],
+                )
+                models.update_session(session_id, mcq_total=0, mcq_pct=None, status="subround2")
+                return redirect(url_for("round2_test", session_id=session_id))
+
             models.update_test_state(
                 session_id, mcq_bank=json.dumps([dict(q) for q in questions]),
                 mcq_idx=0, mcq_extended=False, mcq_seniority=seniority,
@@ -1303,11 +1334,16 @@ def register_routes(app):
             bonus = question_bank.select_bonus_questions(
                 test_session["skills_tested"], state["mcq_seniority"], exclude_ids, round1_engine.BONUS_QUESTIONS
             )
-            models.update_test_state(
-                session_id, mcq_bank=json.dumps(state["mcq_bank"] + [dict(q) for q in bonus]),
-                mcq_extended=True,
-            )
-            return redirect(url_for("round1_part_a", session_id=session_id))
+            if not bonus:
+                # Bank exhausted — can't extend further, just make the call
+                # with what we have rather than getting stuck.
+                decision = "advance" if pct >= round1_engine.BORDERLINE_REJECT_PCT else "reject"
+            else:
+                models.update_test_state(
+                    session_id, mcq_bank=json.dumps(state["mcq_bank"] + [dict(q) for q in bonus]),
+                    mcq_extended=True,
+                )
+                return redirect(url_for("round1_part_a", session_id=session_id))
 
         if decision == "reject":
             models.update_session(session_id, status="rejected", round1_result="rejected",
@@ -1326,118 +1362,24 @@ def register_routes(app):
                                              app_row["company_name"], application_id=test_session["application_id"])
             return redirect(url_for("test_graceful_exit", session_id=session_id))
 
-        # advance -> Part B
-        models.update_session(session_id, status="part_b")
-        return redirect(url_for("round1_part_b", session_id=session_id))
+        # advance -> sub-round 2 (Project & Experience deep dive)
+        models.update_session(session_id, status="subround2")
+        return redirect(url_for("round2_test", session_id=session_id))
 
     @app.route("/test/<session_id>/graceful-exit")
     def test_graceful_exit(session_id):
         return render_template("test_graceful_exit.html")
 
-    # ---- Round 1 / Part B : Gemini subjective, grounded in resume projects ----
-
-    @app.route("/test/<session_id>/part-b", methods=["GET"])
-    def round1_part_b(session_id):
-        test_session = models.get_session(session_id)
-        if not test_session:
-            abort(404)
-        if test_session["status"] != "part_b":
-            return redirect(url_for("round1_part_a", session_id=session_id))
-
-        state = models.get_test_state(session_id)
-        if not state["partb_bank"]:
-            resume = _resume_for_application(test_session["application_id"])
-            questions = round1_engine.generate_part_b_questions(resume["projects"], test_session["skills_tested"])
-            models.update_test_state(session_id, partb_bank=json.dumps(questions), partb_idx=0)
-            state = models.get_test_state(session_id)
-
-        bank, idx = state["partb_bank"], state["partb_idx"]
-        if idx >= len(bank):
-            return redirect(url_for("round1_complete", session_id=session_id))
-
-        return render_template("round1_part_b.html", test_session=test_session,
-                                question=bank[idx], q_number=idx + 1, q_total=len(bank))
-
-    @app.route("/test/<session_id>/part-b/answer", methods=["POST"])
-    def round1_part_b_answer(session_id):
-        test_session = models.get_session(session_id)
-        if not test_session:
-            abort(404)
-        state = models.get_test_state(session_id)
-        bank, idx = state["partb_bank"], state["partb_idx"]
-        if idx >= len(bank):
-            return redirect(url_for("round1_complete", session_id=session_id))
-
-        q = bank[idx]
-        answer = request.form.get("answer", "")
-        time_taken = int(request.form.get("time_taken_seconds", 0) or 0)
-        keystroke_metrics = json.loads(request.form.get("keystroke_metrics", "{}") or "{}")
-
-        paste_detected, flags = integrity.analyze_answer_keystrokes(
-            session_id, test_session.get("keystroke_baseline"), keystroke_metrics, answer, time_taken
-        )
-        score, justification = round1_engine.grade_part_b(
-            q["question"], q.get("rubric", []), q.get("model_answer", ""), answer
-        )
-
-        models.add_response(
-            session_id=session_id, round_name="round1_subjective", skill=q.get("skill"),
-            question=q["question"], candidate_answer=answer, score=score,
-            model_answer=q.get("model_answer"), rubric=q.get("rubric"),
-            justification=justification,
-            time_taken_seconds=time_taken, paste_detected=paste_detected,
-            keystroke_metrics=keystroke_metrics,
-        )
-        models.update_test_state(session_id, partb_idx=idx + 1)
-        return redirect(url_for("round1_part_b", session_id=session_id))
-
-    @app.route("/test/<session_id>/complete")
-    def round1_complete(session_id):
-        test_session = models.get_session(session_id)
-        if not test_session:
-            abort(404)
-
-        mcq_pct = test_session.get("mcq_pct") or 0
-        part_b_responses = models.get_responses(session_id, round_name="round1_subjective")
-        part_b_pct = round1_engine.score_part_b([r["score"] for r in part_b_responses]) if part_b_responses else None
-        result = round1_engine.compute_round1_result(mcq_pct, part_b_pct)
-
-        integ = db.query_one("SELECT integrity_score FROM sessions WHERE id=%s", (session_id,))
-        models.update_session(session_id, status="completed", part_b_score=part_b_pct,
-                               round1_verdict=result["verdict"], round1_result="completed",
-                               completed_at=datetime.now())
-        db.execute(
-            "UPDATE applications SET round1_score=%s, round1_verdict=%s, round1_completed_at=NOW(), "
-            "integrity_score=%s WHERE id=%s",
-            (result["round1_score"], result["verdict"],
-             integ["integrity_score"] if integ else None, test_session["application_id"]),
-        )
-        if result["verdict"] == "reject":
-            db.execute("UPDATE applications SET status='Rejected' WHERE id=%s", (test_session["application_id"],))
-            app_row = db.query_one(
-                """SELECT u.full_name, u.email, j.title, j.company_name FROM applications a
-                   JOIN users u ON u.id=a.candidate_id JOIN jobs j ON j.id=a.job_id WHERE a.id=%s""",
-                (test_session["application_id"],),
-            )
-            if app_row:
-                mailer.send_rejection_email(app_row["email"], app_row["full_name"], app_row["title"],
-                                             app_row["company_name"], application_id=test_session["application_id"])
-
-        # Positive, generic completion screen — no exact score shown to the candidate.
-        top_skills = (test_session.get("skills_tested") or [])[:2]
-        return render_template("test_complete.html", top_skills=top_skills)
-
-    # ---- Round 2 : Project & Experience deep dive (employer-unlocked) ----
+    # ---- Sub-round 2 : Project & Experience deep dive (Gemini, dynamic) ----
+    # Runs automatically right after sub-round 1 — no employer action needed.
 
     @app.route("/test/<session_id>/round2", methods=["GET"])
     def round2_test(session_id):
         test_session = models.get_session(session_id)
         if not test_session:
             abort(404)
-        app_row = db.query_one("SELECT round2_unlocked FROM applications WHERE id=%s",
-                                (test_session["application_id"],))
-        if not app_row or not app_row["round2_unlocked"]:
-            return render_template("test_not_unlocked.html", round_name="Round 2")
+        if test_session["status"] != "subround2":
+            return redirect(url_for("test_start", invite_token=test_session["invite_token"]))
 
         state = models.get_test_state(session_id)
         if not state["round2_bank"]:
@@ -1487,21 +1429,22 @@ def register_routes(app):
             abort(404)
         responses = models.get_responses(session_id, round_name="round2")
         pct = round2_engine.score_round2([r["score"] for r in responses]) if responses else 0.0
-        models.update_session(session_id, round2_score=pct)
+        models.update_session(session_id, round2_score=pct, status="subround3")
         db.execute("UPDATE applications SET round2_score=%s WHERE id=%s", (pct, test_session["application_id"]))
-        return render_template("test_complete.html", top_skills=(test_session.get("skills_tested") or [])[:2])
+        # Straight into sub-round 3 — one continuous test, no waiting on
+        # anyone to unlock the next part.
+        return redirect(url_for("round3_test", session_id=session_id))
 
-    # ---- Round 3 : JD-fit testing (employer-unlocked) ----
+    # ---- Sub-round 3 : JD-fit testing (Gemini, dynamic) ----
+    # The final sub-round — completing this finishes Round 1 entirely.
 
     @app.route("/test/<session_id>/round3", methods=["GET"])
     def round3_test(session_id):
         test_session = models.get_session(session_id)
         if not test_session:
             abort(404)
-        app_row = db.query_one("SELECT round3_unlocked FROM applications WHERE id=%s",
-                                (test_session["application_id"],))
-        if not app_row or not app_row["round3_unlocked"]:
-            return render_template("test_not_unlocked.html", round_name="Round 3")
+        if test_session["status"] != "subround3":
+            return redirect(url_for("test_start", invite_token=test_session["invite_token"]))
 
         state = models.get_test_state(session_id)
         if not state["round3_bank"]:
@@ -1551,11 +1494,37 @@ def register_routes(app):
         test_session = models.get_session(session_id)
         if not test_session:
             abort(404)
+
         responses = models.get_responses(session_id, round_name="round3")
-        pct = round3_engine.score_round3([r["score"] for r in responses]) if responses else 0.0
-        models.update_session(session_id, round3_score=pct)
-        db.execute("UPDATE applications SET round3_score=%s WHERE id=%s", (pct, test_session["application_id"]))
-        return render_template("test_complete.html", top_skills=(test_session.get("skills_tested") or [])[:2])
+        round3_pct = round3_engine.score_round3([r["score"] for r in responses]) if responses else 0.0
+        mcq_pct = test_session.get("mcq_pct")  # may be None — skipped sub-round 1
+        round2_pct = test_session.get("round2_score") or 0.0
+
+        result = round1_engine.compute_final_round1_score(mcq_pct, round2_pct, round3_pct)
+
+        integ = db.query_one("SELECT integrity_score FROM sessions WHERE id=%s", (session_id,))
+        models.update_session(session_id, round3_score=round3_pct, status="completed",
+                               round1_verdict=result["verdict"], round1_result="completed",
+                               completed_at=datetime.now())
+        db.execute(
+            "UPDATE applications SET round1_score=%s, round1_verdict=%s, round2_score=%s, round3_score=%s, "
+            "round1_completed_at=NOW(), integrity_score=%s WHERE id=%s",
+            (result["round1_score"], result["verdict"], round2_pct, round3_pct,
+             integ["integrity_score"] if integ else None, test_session["application_id"]),
+        )
+
+        # The exact verdict is for the employer's scorecard, not the
+        # candidate — everyone who finishes the full test gets the same
+        # warm, generic completion screen (see spec: don't ghost people
+        # who gave you 20+ minutes). A below-threshold overall score still
+        # gets flagged to the employer as 'reject', but we don't put the
+        # candidate through a harsh rejection screen after they completed
+        # every sub-round in good faith.
+        if result["verdict"] == "reject":
+            db.execute("UPDATE applications SET status='Rejected' WHERE id=%s", (test_session["application_id"],))
+
+        top_skills = (test_session.get("skills_tested") or [])[:2]
+        return render_template("test_complete.html", top_skills=top_skills)
 
     # ---- Anti-cheat API: browser -> backend event/keystroke beacons ----
 
