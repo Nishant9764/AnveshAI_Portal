@@ -3,12 +3,17 @@ integrity.py
 ────────────
 Anti-cheat scoring for the Round 1 test session.
 
-Two signal streams feed in:
+Three signal streams feed in:
   1. Discrete events from the browser (tab_switch, fullscreen_exit,
      copy, paste, right_click, devtools_open) — logged via
      log_event(). Three "hard" warnings (tab_switch / fullscreen_exit)
-     auto-finishes the test, per spec.
-  2. Keystroke dynamics per answer — flight time (ms between keydown
+     auto-finishes the test.
+  2. A hard 5-second-out-of-screen rule: the moment the candidate exits
+     fullscreen or switches tabs, the browser starts a visible 5-second
+     countdown. If they haven't returned by the time it hits zero, the
+     browser reports 'screen_exit_timeout' and the test ends immediately
+     — no strikes involved, this one is instant.
+  3. Keystroke dynamics per answer — flight time (ms between keydown
      events) and dwell time (ms a key is held) — compared against the
      candidate's own calibration baseline captured on the pre-flight
      screen. A subjective answer that appears near-instantly, or whose
@@ -18,7 +23,9 @@ Two signal streams feed in:
 Nothing here ever silently fails a candidate — it only lowers
 integrity_score and adds flags. The employer sees the flags and makes
 the call; a low integrity score does not by itself change the ATS or
-round scores.
+round scores. The one exception is screen_exit_timeout, which is an
+immediate, unconditional termination by design (the candidate is shown
+a clear 5-second countdown before it happens, so it's never a surprise).
 """
 
 import statistics
@@ -26,6 +33,7 @@ import statistics
 import db
 
 HARD_EVENTS = {"tab_switch", "fullscreen_exit"}
+INSTANT_TERMINATE_EVENTS = {"screen_exit_timeout"}
 MAX_WARNINGS = 3
 
 EVENT_PENALTY = {
@@ -35,6 +43,8 @@ EVENT_PENALTY = {
     "paste": 20,
     "right_click": 5,
     "devtools_open": 20,
+    "screen_exit_timeout": 100,
+    "shortcut_blocked": 5,
 }
 
 
@@ -58,9 +68,16 @@ def log_event(session_id, event_type, detail=None):
         (penalty, session_id),
     )
 
+    should_terminate = event_type in INSTANT_TERMINATE_EVENTS or (
+        warnings_count is not None and warnings_count >= MAX_WARNINGS
+    )
+
     return {
         "warnings_count": warnings_count,
-        "should_terminate": warnings_count is not None and warnings_count >= MAX_WARNINGS,
+        "should_terminate": should_terminate,
+        "reason": "screen_exit_timeout" if event_type in INSTANT_TERMINATE_EVENTS else (
+            "warnings" if should_terminate else None
+        ),
     }
 
 
