@@ -1387,6 +1387,10 @@ def register_routes(app):
     def test_graceful_exit(session_id):
         return render_template("test_graceful_exit.html")
 
+    @app.route("/test/<session_id>/terminated")
+    def test_terminated(session_id):
+        return render_template("test_terminated.html")
+
     # ---- Sub-round 2 : Project & Experience deep dive (Gemini, dynamic) ----
     # Runs automatically right after sub-round 1 — no employer action needed.
 
@@ -1550,11 +1554,19 @@ def register_routes(app):
         data = request.get_json(silent=True) or {}
         event_type = data.get("event_type")
         detail = data.get("detail")
-        if event_type not in ("tab_switch", "fullscreen_exit", "copy", "paste", "right_click", "devtools_open"):
+        allowed = ("tab_switch", "fullscreen_exit", "copy", "paste", "right_click",
+                   "devtools_open", "screen_exit_timeout", "shortcut_blocked")
+        if event_type not in allowed:
             return jsonify({"error": "invalid event_type"}), 400
         result = integrity.log_event(session_id, event_type, detail)
         if result["should_terminate"]:
-            models.update_session(session_id, status="terminated")
+            models.update_session(session_id, status="terminated",
+                                   round1_verdict="reject", completed_at=datetime.now())
+            db.execute(
+                "UPDATE applications SET status='Rejected' WHERE id="
+                "(SELECT application_id FROM sessions WHERE id=%s)",
+                (session_id,),
+            )
         return jsonify(result)
 
     @app.route("/employer/applicants/<int:app_id>/integrity-report-json")
