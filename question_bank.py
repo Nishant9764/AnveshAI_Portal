@@ -17,8 +17,11 @@ a resume. Selection logic:
 """
 
 import random
+import logging
 
 import db
+
+logger = logging.getLogger("question_bank")
 
 MIN_QUESTIONS = 10
 MAX_QUESTIONS = 15
@@ -110,6 +113,37 @@ def select_round1_mcqs(skills, seniority="mid"):
             (exclude_ids or [-1], need),
         )
         picked.extend(rows)
+
+    # Last-resort fallback: if we STILL have nothing, question_type in the
+    # DB almost certainly isn't literally 'mcq' in any casing (a different
+    # word entirely, or NULL) — rather than showing the candidate no
+    # questions at all, pull ANY row that at least has usable options and
+    # a correct answer, regardless of what's in question_type. This is the
+    # difference between "Round 1 skills section silently vanishes" and
+    # "it renders using whatever's actually in the table."
+    if not picked:
+        rows = db.query_all(
+            """SELECT * FROM questions
+               WHERE options IS NOT NULL AND correct_option IS NOT NULL
+                 AND id != ALL(%s)
+               ORDER BY random() LIMIT %s""",
+            (exclude_ids or [-1], MIN_QUESTIONS),
+        )
+        if rows:
+            logger.warning(
+                "No rows matched question_type='mcq' for skills %s — used the "
+                "unfiltered fallback (%d rows). Check the actual value in your "
+                "question_type column at /employer/question-bank.", skills, len(rows)
+            )
+            picked.extend(rows)
+        else:
+            logger.warning(
+                "select_round1_mcqs found ZERO usable rows at all for skills %s "
+                "(even with no type/skill filter) — the `questions` table is "
+                "likely empty or has no rows with both options and "
+                "correct_option populated. Check /employer/question-bank.",
+                skills,
+            )
 
     random.shuffle(picked)
     return picked[:MAX_QUESTIONS]
