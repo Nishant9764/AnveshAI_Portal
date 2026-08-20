@@ -1,59 +1,261 @@
 /**
  * anticheat.js
  * ─────────────
- * Shared lockdown + keystroke-dynamics module used on every test screen
- * (preflight calibration, Part A/B, Round 2, Round 3).
+ * Shared lockdown module used on every test screen (preflight
+ * calibration, all 3 sections).
  *
  * Usage on a page:
- *   AntiCheat.initLockdown(sessionId, { onTerminate: () => location.href = '/test/graceful-exit' });
- *   AntiCheat.attachKeystrokeTracking(textareaEl);   // for typed-answer screens
- *   ... on submit: AntiCheat.getKeystrokeMetrics(textareaEl) -> {flight_times, dwell_times}
+ *   AntiCheat.initLockdown(sessionId, { onTerminate: (reason) => ... });
+ *   AntiCheat.attachKeystrokeTracking(textareaEl);
+ *   ... on submit: AntiCheat.getKeystrokeMetrics(textareaEl)
+ *
+ * Rules enforced:
+ *   - Exiting full-screen or switching tabs starts a visible 5-second
+ *     countdown. Not back within 5 seconds -> the session ends
+ *     immediately, no strikes involved.
+ *   - Separately, repeated soft violations (copy/paste/right-click/
+ *     devtools/blocked shortcuts) still accumulate toward a 3-warning
+ *     limit as a secondary safety net.
+ *   - Common devtools/inspect shortcuts and text selection are blocked
+ *     outright.
  */
 (function (global) {
   const AntiCheat = {};
+  const SCREEN_EXIT_LIMIT_MS = 5000;
 
   // ---------------------------------------------------------------
-  // Fullscreen + tab-switch + copy/paste + right-click + devtools lock
+  // Visuals: countdown overlay + violation banner, injected once
+  // ---------------------------------------------------------------
+  function injectStyles() {
+    if (document.getElementById("ac-styles")) return;
+    const style = document.createElement("style");
+    style.id = "ac-styles";
+    style.textContent = `
+      .ac-exit-overlay {
+        position: fixed; inset: 0; z-index: 99999;
+        background: rgba(15, 17, 32, 0.82);
+        backdrop-filter: blur(6px);
+        display: none; align-items: center; justify-content: center;
+        font-family: "Inter", -apple-system, sans-serif;
+        animation: acFadeIn 0.2s ease;
+      }
+      .ac-exit-overlay.active { display: flex; }
+      @keyframes acFadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .ac-exit-card {
+        background: #ffffff; border-radius: 16px; padding: 36px 40px;
+        text-align: center; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+        animation: acPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes acPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+      .ac-ring-wrap { position: relative; width: 108px; height: 108px; margin: 0 auto 18px; }
+      .ac-ring { transform: rotate(-90deg); width: 108px; height: 108px; }
+      .ac-ring-bg { fill: none; stroke: #f0f1f6; stroke-width: 8; }
+      .ac-ring-progress {
+        fill: none; stroke: #d1435b; stroke-width: 8; stroke-linecap: round;
+        stroke-dasharray: 327; stroke-dashoffset: 0;
+      }
+      .ac-ring-number {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-size: 30px; font-weight: 700; color: #d1435b; font-variant-numeric: tabular-nums;
+      }
+      .ac-exit-title { font-size: 17px; font-weight: 700; color: #171a2b; margin-bottom: 8px; }
+      .ac-exit-msg { font-size: 13.5px; color: #6b7280; line-height: 1.6; margin-bottom: 20px; }
+      .ac-return-btn {
+        background: #4338ca; color: #fff; border: none; border-radius: 9px;
+        padding: 11px 22px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+        font-family: inherit; transition: background 0.15s;
+      }
+      .ac-return-btn:hover { background: #362da3; }
+
+      .ac-warning-banner {
+        position: fixed; top: 0; left: 0; right: 0; z-index: 99998;
+        background: #fff7e6; color: #b45309; border-bottom: 1px solid #f3d9a4;
+        text-align: center; padding: 10px 16px; font-family: "Inter", sans-serif;
+        font-size: 13px; font-weight: 500; animation: acSlideDown 0.2s ease;
+      }
+      @keyframes acSlideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+      .ac-locked-select { user-select: none; -webkit-user-select: none; }
+      .ac-locked-select textarea, .ac-locked-select input {
+        user-select: text; -webkit-user-select: text;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function buildOverlay() {
+    if (document.getElementById("ac-exit-overlay")) return;
+    const overlay = document.createElement("div");
+    overlay.id = "ac-exit-overlay";
+    overlay.className = "ac-exit-overlay";
+    overlay.innerHTML = `
+      <div class="ac-exit-card">
+        <div class="ac-ring-wrap">
+          <svg class="ac-ring" viewBox="0 0 116 116">
+            <circle class="ac-ring-bg" cx="58" cy="58" r="52"></circle>
+            <circle class="ac-ring-progress" id="ac-ring-progress" cx="58" cy="58" r="52"></circle>
+          </svg>
+          <div class="ac-ring-number" id="ac-ring-number">5</div>
+        </div>
+        <div class="ac-exit-title">You've left the assessment</div>
+        <div class="ac-exit-msg">Return now or this session will end automatically.</div>
+        <button class="ac-return-btn" id="ac-return-btn" type="button">Return to Assessment</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  // ---------------------------------------------------------------
+  // Main lockdown: fullscreen/tab exit -> 5s countdown -> terminate,
+  // plus soft-violation tracking (copy/paste/right-click/devtools),
+  // plus shortcut blocking + selection lock.
   // ---------------------------------------------------------------
   AntiCheat.initLockdown = function (sessionId, opts) {
     opts = opts || {};
+    injectStyles();
+    buildOverlay();
+    document.documentElement.classList.add("ac-locked-select");
+
+    const overlay = document.getElementById("ac-exit-overlay");
+    const ringProgress = document.getElementById("ac-ring-progress");
+    const ringNumber = document.getElementById("ac-ring-number");
+    const returnBtn = document.getElementById("ac-return-btn");
+    const CIRCUMFERENCE = 2 * Math.PI * 52;
+
+    let exitTimerActive = false;
+    let leftAt = null;
+    let pollHandle = null;
+
     const beacon = (eventType, detail) => {
-      fetch(`/api/test/${sessionId}/integrity-event`, {
+      return fetch(`/api/test/${sessionId}/integrity-event`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ event_type: eventType, detail: detail || "" }),
         keepalive: true,
       })
         .then((r) => r.json())
-        .then((data) => {
-          if (data.warnings_count != null) {
-            AntiCheat._showWarning(data.warnings_count, opts.maxWarnings || 3);
-          }
-          if (data.should_terminate) {
-            if (opts.onTerminate) opts.onTerminate();
-          }
-        })
-        .catch(() => {});
+        .catch(() => null);
     };
 
-    // Fullscreen enforcement
+    function isOutOfScreen() {
+      return document.hidden || !document.fullscreenElement;
+    }
+
+    function showOverlay() {
+      overlay.classList.add("active");
+    }
+    function hideOverlay() {
+      overlay.classList.remove("active");
+      ringProgress.style.transition = "none";
+      ringProgress.style.strokeDashoffset = "0";
+    }
+
+    function handleBeaconResult(data) {
+      if (!data) return;
+      if (data.warnings_count != null) {
+        AntiCheat._showWarning(data.warnings_count, opts.maxWarnings || 3);
+      }
+      if (data.should_terminate && data.reason !== "screen_exit_timeout") {
+        // The screen_exit_timeout path handles its own termination flow
+        // (it needs the countdown to finish first); this covers the
+        // separate 3-strike path for repeated soft violations.
+        clearExitTimer(true);
+        if (opts.onTerminate) opts.onTerminate(data.reason || "warnings");
+      }
+    }
+
+    function startExitTimer(triggerEvent) {
+      if (exitTimerActive) return;
+      exitTimerActive = true;
+      leftAt = Date.now();
+      showOverlay();
+      ringNumber.textContent = "5";
+
+      // Animate the ring smoothly to empty over the full window.
+      ringProgress.style.transition = "none";
+      ringProgress.style.strokeDashoffset = "0";
+      requestAnimationFrame(() => {
+        ringProgress.style.transition = `stroke-dashoffset ${SCREEN_EXIT_LIMIT_MS}ms linear`;
+        ringProgress.style.strokeDashoffset = String(CIRCUMFERENCE);
+      });
+
+      beacon(
+        triggerEvent,
+        triggerEvent === "fullscreen_exit"
+          ? "Exited full-screen"
+          : "Tab switched / window hidden"
+      ).then(handleBeaconResult);
+
+      // Cosmetic 1s tick for the number; the real pass/fail check below is
+      // timestamp-based so background-tab timer throttling can't cause a
+      // false pass.
+      const tickHandle = setInterval(() => {
+        const elapsed = Date.now() - leftAt;
+        const remaining = Math.max(
+          0,
+          Math.ceil((SCREEN_EXIT_LIMIT_MS - elapsed) / 1000)
+        );
+        ringNumber.textContent = String(remaining);
+      }, 250);
+
+      pollHandle = setInterval(() => {
+        if (!isOutOfScreen()) {
+          clearExitTimer();
+          return;
+        }
+        if (Date.now() - leftAt >= SCREEN_EXIT_LIMIT_MS) {
+          clearInterval(tickHandle);
+          clearExitTimer(true);
+          beacon(
+            "screen_exit_timeout",
+            "Did not return within 5 seconds"
+          ).finally(() => {
+            if (opts.onTerminate) opts.onTerminate("screen_exit_timeout");
+          });
+        }
+      }, 200);
+
+      overlay._acTickHandle = tickHandle;
+    }
+
+    function clearExitTimer(skipHide) {
+      exitTimerActive = false;
+      leftAt = null;
+      if (pollHandle) {
+        clearInterval(pollHandle);
+        pollHandle = null;
+      }
+      if (overlay._acTickHandle) {
+        clearInterval(overlay._acTickHandle);
+        overlay._acTickHandle = null;
+      }
+      if (!skipHide) hideOverlay();
+    }
+
+    returnBtn.addEventListener("click", function () {
+      AntiCheat.requestFullscreen();
+    });
+
     document.addEventListener("fullscreenchange", function () {
       if (!document.fullscreenElement) {
-        beacon("fullscreen_exit", "Exited full-screen mode");
+        startExitTimer("fullscreen_exit");
+      } else if (!document.hidden) {
+        clearExitTimer();
       }
     });
 
-    // Tab switch / window blur
     document.addEventListener("visibilitychange", function () {
       if (document.hidden) {
-        beacon("tab_switch", "Tab switched or window minimized");
+        startExitTimer("tab_switch");
+      } else if (document.fullscreenElement) {
+        clearExitTimer();
       }
     });
 
-    // Copy / paste / right-click blocking + logging
+    // Copy / paste / right-click blocking + logging (soft violations)
     document.addEventListener("copy", function (e) {
       e.preventDefault();
-      beacon("copy", "Copy attempt blocked");
+      beacon("copy", "Copy attempt blocked").then(handleBeaconResult);
     });
     document.addEventListener("cut", function (e) {
       e.preventDefault();
@@ -67,8 +269,26 @@
       beacon("right_click", "Right-click menu blocked");
     });
 
-    // Crude devtools-open heuristic (window size delta) — not bulletproof,
-    // but catches the common case and adds a soft signal.
+    // Block common devtools / inspect / save / print shortcuts outright.
+    document.addEventListener("keydown", function (e) {
+      const key = (e.key || "").toLowerCase();
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+      const blocked =
+        key === "f12" ||
+        (ctrlOrCmd && e.shiftKey && ["i", "j", "c"].includes(key)) ||
+        (ctrlOrCmd && ["u", "s", "p"].includes(key));
+      if (blocked) {
+        e.preventDefault();
+        beacon(
+          "shortcut_blocked",
+          `Blocked shortcut: ${e.ctrlKey ? "Ctrl+" : ""}${
+            e.metaKey ? "Cmd+" : ""
+          }${e.shiftKey ? "Shift+" : ""}${e.key}`
+        );
+      }
+    });
+
+    // Crude devtools-open heuristic (window size delta) — soft signal.
     let devtoolsOpen = false;
     setInterval(function () {
       const threshold = 160;
@@ -82,6 +302,12 @@
         devtoolsOpen = false;
       }
     }, 3000);
+
+    // Warn (native browser prompt) if they try to close/navigate away.
+    window.addEventListener("beforeunload", function (e) {
+      e.preventDefault();
+      e.returnValue = "";
+    });
 
     AntiCheat._beacon = beacon;
   };
@@ -97,14 +323,18 @@
     if (!banner) {
       banner = document.createElement("div");
       banner.id = "ac-warning-banner";
-      banner.style.cssText =
-        "position:fixed;top:0;left:0;right:0;background:#ff4d6d;color:#fff;" +
-        "text-align:center;padding:10px;font-family:monospace;font-size:13px;z-index:9999;";
+      banner.className = "ac-warning-banner";
       document.body.prepend(banner);
     }
-    banner.textContent = `⚠ Warning ${count}/${max}: leaving full-screen, switching tabs, or copy/paste is monitored. ${
-      count >= max ? "Test ending now." : "One more and the test will end."
+    banner.textContent = `Warning ${count}/${max}: this activity is being monitored. ${
+      count >= max
+        ? "Ending session now."
+        : "Please stay focused on the assessment."
     }`;
+    clearTimeout(banner._acHideTimer);
+    banner._acHideTimer = setTimeout(() => {
+      banner.remove();
+    }, 6000);
   };
 
   // ---------------------------------------------------------------
@@ -114,7 +344,12 @@
   // ---------------------------------------------------------------
   AntiCheat.attachKeystrokeTracking = function (el) {
     if (!el) return;
-    const state = { lastKeydown: null, downTimes: {}, flightTimes: [], dwellTimes: [] };
+    const state = {
+      lastKeydown: null,
+      downTimes: {},
+      flightTimes: [],
+      dwellTimes: [],
+    };
     el._acState = state;
 
     el.addEventListener("keydown", function (e) {
