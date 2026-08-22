@@ -1,0 +1,75 @@
+{% extends "dashboard_base.html" %}
+{% block title %}Test Question Selection - Anvesh AI{% endblock %}
+{% block page_title %}Test Question Selection{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">&#128101;</span> Applicants</a>
+<a href="{{ url_for('question_bank_diagnostic') }}"><span class="nav-icon">&#128218;</span> Question Bank</a>
+<a href="{{ url_for('question_bank_test_selection') }}" class="active"><span class="nav-icon">&#129514;</span> Test Selection</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card" style="max-width:720px;">
+    <div class="card-header">
+        <h3>Test the Round 1 question selector directly</h3>
+        <p style="font-size:12.5px;color:#888;">
+            Runs the exact same function Round 1 uses against skills you type in — no application,
+            no email, no invite link needed. Type skills the way a resume would list them.
+        </p>
+    </div>
+
+    <form method="POST" style="margin-top:16px;">
+        <div class="form-group">
+            <label for="skills">Skills (comma separated)</label>
+            <input type="text" id="skills" name="skills" class="form-control"
+                   value="{{ skills_input }}" placeholder="Python, React, SQL" required>
+        </div>
+        <div class="form-group">
+            <label for="seniority">Seniority</label>
+            <select id="seniority" name="seniority" class="form-control">
+                {% for s in ['junior', 'mid', 'senior'] %}
+                <option value="{{ s }}" {{ 'selected' if seniority == s else '' }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Run Selection</button>
+    </form>
+</div>
+
+{% if results is not none %}
+<div class="card" style="max-width:720px;margin-top:16px;">
+    <div class="card-header">
+        <h3>{{ results|length }} question{{ 's' if results|length != 1 else '' }} selected</h3>
+        {% if not results %}
+        <p style="font-size:12.5px;color:#c0392b;">
+            Zero questions came back. Check the server log for a warning explaining why
+            (no usable skills, or no matching rows), or check
+            <a href="{{ url_for('question_bank_diagnostic') }}">the Question Bank page</a>
+            to see what skill names actually exist in your data.
+        </p>
+        {% endif %}
+    </div>
+
+    {% if results %}
+    <table class="data-table">
+        <thead><tr><th>Skill</th><th>Type</th><th>Question</th><th>Correct</th></tr></thead>
+        <tbody>
+            {% for q in results %}
+            <tr>
+                <td style="font-weight:600;">{{ q.skill }}</td>
+                <td>{{ q.question_type or '—' }}</td>
+                <td style="max-width:340px;font-size:12.5px;">{{ q.question }}</td>
+                <td style="font-size:12.5px;">{{ q.correct_option }}{% if q.correct_option_text %} — {{ q.correct_option_text }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

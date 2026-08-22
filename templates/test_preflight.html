@@ -126,6 +126,7 @@
       ? performance.now() - startTime
       : 1000;
 
+    AntiCheat.markLegitimateNavigation();
     AntiCheat.requestFullscreen();
     setTimeout(function () {
       document.getElementById("preflight-form").submit();

@@ -927,6 +927,27 @@ def register_routes(app):
         return render_template("employer_question_bank.html",
                                 total=(total["n"] if total else 0), rows=by_skill)
 
+    @app.route("/employer/question-bank/test-selection", methods=["GET", "POST"])
+    @login_required(role="employer")
+    def question_bank_test_selection():
+        """Run the exact same selector Round 1 uses (question_bank.
+        select_round1_mcqs) against skills you type in, right now — no
+        real application, no email, no invite link needed. This is the
+        fastest way to check the selector is actually working before
+        trusting it with a live candidate."""
+        results = None
+        skills_input = request.form.get("skills", "") if request.method == "POST" else ""
+        seniority = request.form.get("seniority", "mid") if request.method == "POST" else "mid"
+
+        if request.method == "POST":
+            skills = [s.strip() for s in skills_input.split(",") if s.strip()]
+            results = question_bank.select_round1_mcqs(skills, seniority)
+
+        return render_template(
+            "question_bank_test_selection.html",
+            results=results, skills_input=skills_input, seniority=seniority,
+        )
+
     @app.route("/employer/jobs/create", methods=["GET", "POST"])
     @login_required(role="employer")
     def create_job():
@@ -1291,7 +1312,7 @@ def register_routes(app):
                 return redirect(url_for("round2_test", session_id=session_id))
 
             models.update_test_state(
-                session_id, mcq_bank=json.dumps([dict(q) for q in questions]),
+                session_id, mcq_bank=json.dumps([dict(q) for q in questions], default=str),
                 mcq_idx=0, mcq_extended=False, mcq_seniority=seniority,
             )
             state = models.get_test_state(session_id)
@@ -1357,7 +1378,7 @@ def register_routes(app):
                 decision = "advance" if pct >= round1_engine.BORDERLINE_REJECT_PCT else "reject"
             else:
                 models.update_test_state(
-                    session_id, mcq_bank=json.dumps(state["mcq_bank"] + [dict(q) for q in bonus]),
+                    session_id, mcq_bank=json.dumps(state["mcq_bank"] + [dict(q) for q in bonus], default=str),
                     mcq_extended=True,
                 )
                 return redirect(url_for("round1_part_a", session_id=session_id))

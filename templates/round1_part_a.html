@@ -101,7 +101,7 @@
 {% endblock %} {% block extra_script %}
 <script>
   AntiCheat.initLockdown("{{ test_session.id }}", {
-    onTerminate: function () { window.location.href = "{{ url_for('test_graceful_exit', session_id=test_session.id) }}"; }
+    onTerminate: function (reason) { window.location.href = reason === 'screen_exit_timeout' ? "{{ url_for('test_terminated', session_id=test_session.id) }}" : "{{ url_for('test_graceful_exit', session_id=test_session.id) }}"; }
   });
 
   const TIME_LIMIT = {{ question.estimated_time_seconds or 60 }};
@@ -125,10 +125,12 @@
   tick();
 
   function submitForm() {
+    AntiCheat.markLegitimateNavigation();
     document.getElementById("time_taken_seconds").value = Math.round((performance.now() - startedAt) / 1000);
     document.getElementById("mcq-form").submit();
   }
   document.getElementById("mcq-form").addEventListener("submit", function () {
+    AntiCheat.markLegitimateNavigation();
     document.getElementById("time_taken_seconds").value = Math.round((performance.now() - startedAt) / 1000);
   });
 </script>
