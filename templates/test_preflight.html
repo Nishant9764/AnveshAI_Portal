@@ -126,11 +126,13 @@
       ? performance.now() - startTime
       : 1000;
 
-    AntiCheat.markLegitimateNavigation();
     AntiCheat.requestFullscreen();
+    // Soft-submit (fetch, not a real navigation) so the full-screen mode
+    // just requested above carries straight into Section 1 without ever
+    // being dropped and re-requested.
     setTimeout(function () {
-      document.getElementById("preflight-form").submit();
-    }, 300);
+      TestFlow.softSubmit(document.getElementById("preflight-form"));
+    }, 150);
   });
 </script>
 {% endblock %}
