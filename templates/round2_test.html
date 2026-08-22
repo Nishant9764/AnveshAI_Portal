@@ -31,9 +31,12 @@
     id="answer-form"
     method="POST"
     action="{{ url_for('round2_answer', session_id=test_session.id) }}"
+    data-question-form
+    data-time-limit="300"
+    data-urgent-at="30"
   >
-    <input type="hidden" name="time_taken_seconds" id="time_taken_seconds" />
-    <input type="hidden" name="keystroke_metrics" id="keystroke_metrics" />
+    <input type="hidden" name="time_taken_seconds" />
+    <input type="hidden" name="keystroke_metrics" />
     <label for="answer">Your answer</label>
     <textarea
       id="answer"
@@ -41,6 +44,7 @@
       rows="8"
       placeholder="Type your answer here — be specific."
       required
+      data-keystroke-track
     ></textarea>
     <p style="font-size: 11.5px; color: var(--muted2); margin-top: 8px">
       Copy/paste is disabled — please type your own answer.
@@ -48,62 +52,4 @@
     <button type="submit" class="btn" style="margin-top: 20px">Continue</button>
   </form>
 </div>
-{% endblock %} {% block extra_script %}
-<script>
-  AntiCheat.initLockdown("{{ test_session.id }}", {
-    onTerminate: function (reason) {
-      window.location.href =
-        reason === "screen_exit_timeout"
-          ? "{{ url_for('test_terminated', session_id=test_session.id) }}"
-          : "{{ url_for('test_graceful_exit', session_id=test_session.id) }}";
-    },
-  });
-
-  const answerEl = document.getElementById("answer");
-  AntiCheat.attachKeystrokeTracking(answerEl);
-
-  const TIME_LIMIT = 300;
-  let remaining = TIME_LIMIT;
-  const timerRow = document.getElementById("timer");
-  const timerText = document.getElementById("timer-text");
-  const startedAt = performance.now();
-
-  function tick() {
-    remaining -= 1;
-    const m = Math.floor(Math.max(remaining, 0) / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = Math.max(remaining, 0) % 60;
-    timerText.textContent = m + ":" + s.toString().padStart(2, "0");
-    if (remaining <= 30) timerRow.classList.add("urgent");
-    if (remaining <= 0) {
-      clearInterval(interval);
-      submitForm();
-    }
-  }
-  const interval = setInterval(tick, 1000);
-  tick();
-
-  function submitForm() {
-    AntiCheat.markLegitimateNavigation();
-    document.getElementById("time_taken_seconds").value = Math.round(
-      (performance.now() - startedAt) / 1000
-    );
-    document.getElementById("keystroke_metrics").value = JSON.stringify(
-      AntiCheat.getKeystrokeMetrics(answerEl)
-    );
-    document.getElementById("answer-form").submit();
-  }
-  document
-    .getElementById("answer-form")
-    .addEventListener("submit", function () {
-      AntiCheat.markLegitimateNavigation();
-      document.getElementById("time_taken_seconds").value = Math.round(
-        (performance.now() - startedAt) / 1000
-      );
-      document.getElementById("keystroke_metrics").value = JSON.stringify(
-        AntiCheat.getKeystrokeMetrics(answerEl)
-      );
-    });
-</script>
 {% endblock %}
