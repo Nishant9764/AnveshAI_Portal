@@ -224,27 +224,65 @@
         color: var(--accent);
         margin-bottom: 12px;
       }
+      .option-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: border-color 0.15s, background 0.15s;
+      }
+      .option-row:hover {
+        border-color: var(--accent);
+        background: var(--accent-light);
+      }
+      .option-row input[type="radio"] {
+        accent-color: var(--accent);
+        width: 16px;
+        height: 16px;
+      }
     </style>
     {% block extra_style %}{% endblock %}
   </head>
   <body>
-    <div class="top-bar">
-      <div class="brand">
-        <span class="brand-mark">A</span> Skills Assessment
+    <!-- Everything that changes between questions/sections lives inside
+         #ac-content. testflow.js swaps ONLY this element's innerHTML on
+         every question transition (via fetch, never a real navigation),
+         so the document itself is never torn down and full-screen mode
+         is never touched by our own app moving between questions. -->
+    <div
+      id="ac-content"
+      {%
+      if
+      test_session
+      %}data-session-id="{{ test_session.id }}"
+      {%
+      endif
+      %}
+    >
+      <div class="top-bar">
+        <div class="brand">
+          <span class="brand-mark">A</span> Skills Assessment
+        </div>
+        {% block header_right %}{% endblock %}
       </div>
-      {% block header_right %}{% endblock %}
-    </div>
 
-    <div class="main-wrap">
-      <div class="container">
-        {% with messages = get_flashed_messages() %} {% if messages %}{% for m
-        in messages %}
-        <div class="flash">{{ m }}</div>
-        {% endfor %}{% endif %} {% endwith %} {% block content %}{% endblock %}
+      <div class="main-wrap">
+        <div class="container">
+          {% with messages = get_flashed_messages() %} {% if messages %}{% for m
+          in messages %}
+          <div class="flash">{{ m }}</div>
+          {% endfor %}{% endif %} {% endwith %} {% block content %}{% endblock
+          %}
+        </div>
       </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/anticheat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/testflow.js') }}"></script>
     {% block extra_script %}{% endblock %}
   </body>
 </html>
