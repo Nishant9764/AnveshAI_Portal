@@ -206,7 +206,13 @@
     }
 
     const form = document.querySelector("#ac-content form[data-question-form]");
-    if (!form) return; // a terminal page (complete/exit/etc.) — nothing further to wire up
+    if (!form) {
+      // A terminal/informational page (test complete, graceful exit,
+      // terminated, desktop-only block, etc.) — nothing left to monitor.
+      if (global.AntiCheat && AntiCheat.teardownLockdown)
+        AntiCheat.teardownLockdown();
+      return;
+    }
 
     const answerEl = form.querySelector("[data-keystroke-track]");
     if (answerEl && global.AntiCheat)

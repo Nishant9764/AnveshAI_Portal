@@ -1,0 +1,342 @@
+{% macro icon(name, size=18) %}{% if name == 'home' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M3 11.5 12 4l9 7.5" />
+  <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+</svg>
+{% elif name == 'plus' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M12 5v14M5 12h14" />
+</svg>
+{% elif name == 'list' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M8 6h13M8 12h13M8 18h13" />
+  <circle cx="3.5" cy="6" r="1" />
+  <circle cx="3.5" cy="12" r="1" />
+  <circle cx="3.5" cy="18" r="1" />
+</svg>
+{% elif name == 'users' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+  <circle cx="10" cy="7" r="4" />
+  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+</svg>
+{% elif name == 'building' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M4 21V6a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v15" />
+  <path d="M14 9h4a1 1 0 0 1 1 1v11" />
+  <path d="M9 8h.01M9 12h.01M9 16h.01M4 21h16" />
+</svg>
+{% elif name == 'settings' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <circle cx="12" cy="12" r="3" />
+  <path
+    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+  />
+</svg>
+{% elif name == 'user' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+  <circle cx="12" cy="7" r="4" />
+</svg>
+{% elif name == 'file' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+  <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z" />
+  <path d="M9 13h6M9 17h6" />
+</svg>
+{% elif name == 'bar-chart' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M3 3v18h18" />
+  <rect x="7" y="12" width="3" height="6" />
+  <rect x="12.5" y="8" width="3" height="10" />
+  <rect x="18" y="5" width="3" height="13" />
+</svg>
+{% elif name == 'mail' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <rect x="3" y="5" width="18" height="14" rx="2" />
+  <path d="m3 7 9 6 9-6" />
+</svg>
+{% elif name == 'star' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path
+    d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"
+  />
+</svg>
+{% elif name == 'logout' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+  <path d="M16 17l5-5-5-5" />
+  <path d="M21 12H9" />
+</svg>
+{% elif name == 'book' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+</svg>
+{% elif name == 'beaker' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path
+    d="M9 2h6M10 2v6.5L4.5 18a1 1 0 0 0 .87 1.5h13.26a1 1 0 0 0 .87-1.5L14 8.5V2"
+  />
+  <path d="M6.5 15h11" />
+</svg>
+{% elif name == 'bell' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+</svg>
+{% elif name == 'trending-up' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="m22 7-8.5 8.5-5-5L2 17" />
+  <path d="M16 7h6v6" />
+</svg>
+{% elif name == 'check' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M20 6 9 17l-5-5" />
+</svg>
+{% elif name == 'x' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M18 6 6 18M6 6l12 12" />
+</svg>
+{% elif name == 'alert' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path
+    d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+  />
+  <path d="M12 9v4M12 17h.01" />
+</svg>
+{% elif name == 'download' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+  <path d="M7 10l5 5 5-5M12 15V3" />
+</svg>
+{% elif name == 'eye' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+  <circle cx="12" cy="12" r="3" />
+</svg>
+{% elif name == 'shield' %}
+<svg
+  width="{{ size }}"
+  height="{{ size }}"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  class="icon"
+>
+  <path d="M12 2 4 5v6c0 5.5 3.5 9 8 11 4.5-2 8-5.5 8-11V5Z" />
+</svg>
+{% endif %}{% endmacro %}
