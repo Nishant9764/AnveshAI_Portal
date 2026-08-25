@@ -1,0 +1,106 @@
+{% extends "dashboard_base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Analytics - Anvesh AI{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">{{ icon('users') }}</span> Applicants</a>
+<a href="{{ url_for('employer_analytics') }}" class="active"><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a>
+<a href="{{ url_for('employer_notifications') }}"><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">{{ icon('settings') }}</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header"><h3>Hiring funnel</h3></div>
+    <div class="funnel-row">
+        {% set stages = [
+            ('Applied', funnel.applied, None),
+            ('Screened', funnel.scored, funnel.applied),
+            ('Passed baseline', funnel.passed_ats, funnel.scored),
+            ('Completed Round 1', funnel.completed_round1, funnel.passed_ats),
+            ('Passed Round 1', funnel.passed_round1, funnel.completed_round1),
+            ('Shortlisted+', (funnel.shortlisted or 0) + (funnel.interview or 0) + (funnel.offered or 0), funnel.passed_round1),
+        ] %}
+        {% for label, value, of in stages %}
+        <div class="funnel-stage">
+            <div class="funnel-value">{{ value or 0 }}</div>
+            <div class="funnel-label">{{ label }}</div>
+            {% if of %}
+            <div class="funnel-pct">{{ ((value or 0) / of * 100) | round | int if of > 0 else 0 }}%</div>
+            {% endif %}
+        </div>
+        {% if not loop.last %}<div class="funnel-arrow">{{ icon('trending-up', 16) }}</div>{% endif %}
+        {% endfor %}
+    </div>
+    <div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap;font-size:12.5px;color:#888;">
+        <span>Offered: <strong style="color:#171a2b;">{{ funnel.offered or 0 }}</strong></span>
+        <span>Rejected: <strong style="color:#171a2b;">{{ funnel.rejected or 0 }}</strong></span>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="margin-top:20px;">
+    <div class="card">
+        <div class="card-header"><h3>Average scores</h3></div>
+        <div class="score-grid">
+            <div><span>ATS Match</span><strong>{{ averages.avg_match_score if averages.avg_match_score is not none else '—' }}</strong></div>
+            <div><span>Technical</span><strong>{{ averages.avg_technical if averages.avg_technical is not none else '—' }}</strong></div>
+            <div><span>Experience</span><strong>{{ averages.avg_experience if averages.avg_experience is not none else '—' }}</strong></div>
+            <div><span>Soft Skills</span><strong>{{ averages.avg_soft_skills if averages.avg_soft_skills is not none else '—' }}</strong></div>
+            <div><span>Impact</span><strong>{{ averages.avg_impact if averages.avg_impact is not none else '—' }}</strong></div>
+            <div><span>Round 1 Score</span><strong>{{ averages.avg_round1_score if averages.avg_round1_score is not none else '—' }}</strong></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3>Most common red flags</h3></div>
+        {% if top_flags %}
+        <ul style="font-size:12.5px;color:#555;line-height:2;margin-top:8px;padding-left:18px;">
+            {% for flag, count in top_flags %}
+            <li>{{ flag }} <span style="color:#999;">&times;{{ count }}</span></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p style="font-size:12.5px;color:#999;margin-top:8px;">None flagged yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+    <div class="card-header"><h3>By job posting</h3></div>
+    {% if per_job %}
+    <table class="data-table">
+        <thead><tr><th>Job</th><th>Applicants</th><th>Passed baseline</th><th>Passed Round 1</th><th>Avg match</th></tr></thead>
+        <tbody>
+            {% for j in per_job %}
+            <tr>
+                <td style="font-weight:600;">{{ j.title }}</td>
+                <td>{{ j.applicant_count }}</td>
+                <td>{{ j.passed_ats_count }}</td>
+                <td>{{ j.passed_round1_count }}</td>
+                <td>{{ j.avg_match_score if j.avg_match_score is not none else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state"><p>No jobs posted yet.</p></div>
+    {% endif %}
+</div>
+
+<style>
+.funnel-row { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 12px 0; }
+.funnel-stage { text-align: center; min-width: 92px; }
+.funnel-value { font-size: 22px; font-weight: 700; color: #171a2b; }
+.funnel-label { font-size: 11px; color: #888; margin-top: 2px; }
+.funnel-pct { font-size: 10.5px; color: #4338ca; margin-top: 2px; font-weight: 600; }
+.funnel-arrow { color: #d0d3dc; flex-shrink: 0; }
+.score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
+.score-grid div { display: flex; justify-content: space-between; font-size: 12.5px; color: #555; border-bottom: 1px solid #f3f3f6; padding-bottom: 6px; }
+.score-grid strong { color: #171a2b; }
+</style>
+{% endblock %}
