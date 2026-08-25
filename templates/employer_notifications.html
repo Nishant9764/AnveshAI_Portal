@@ -1,0 +1,59 @@
+{% extends "dashboard_base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Notifications - Anvesh AI{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">{{ icon('users') }}</span> Applicants</a>
+<a href="{{ url_for('employer_analytics') }}"><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a>
+<a href="{{ url_for('employer_notifications') }}" class="active"><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">{{ icon('settings') }}</span> Settings</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="card">
+    <div class="card-header"><h3>Recent activity</h3></div>
+    {% if events %}
+    <div style="display:flex;flex-direction:column;margin-top:10px;">
+        {% for e in events %}
+        <a href="{{ url_for('employer_applicant_detail', app_id=e.app_id) }}" class="notif-row">
+            <span class="notif-icon {{ e.type }}">
+                {% if e.type == 'applied' %}{{ icon('file', 16) }}
+                {% elif e.type == 'round1_pass' %}{{ icon('check', 16) }}
+                {% else %}{{ icon('x', 16) }}{% endif %}
+            </span>
+            <div style="flex:1;">
+                <div style="font-size:13.5px;color:#171a2b;">{{ e.text }}</div>
+                <div style="font-size:11.5px;color:#999;">{{ e.at|time_ago if e.at else '' }}{% if e.meta %} &middot; {{ e.meta }}{% endif %}</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h4>Nothing yet</h4>
+        <p>New applications and Round 1 completions will show up here.</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.notif-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 8px;
+    border-bottom: 1px solid #f3f3f6; text-decoration: none; color: inherit;
+    transition: background 0.15s;
+}
+.notif-row:hover { background: #fafafc; }
+.notif-icon {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+}
+.notif-icon.applied { background: #eef0ff; color: #4338ca; }
+.notif-icon.round1_pass { background: #ecfdf5; color: #16a34a; }
+.notif-icon.round1_reject { background: #fdeef1; color: #d1435b; }
+</style>
+{% endblock %}
