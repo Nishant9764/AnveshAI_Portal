@@ -1,0 +1,239 @@
+{% extends "dashboard_base.html" %} {% from "_icons.html" import icon %} {%
+block title %}Round 1 Report — {{ a.full_name }} - Anvesh AI{% endblock %} {%
+block page_title %}Round 1 Report{% endblock %} {% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}"
+  ><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a
+>
+<a href="{{ url_for('create_job') }}"
+  ><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a
+>
+<a href="{{ url_for('manage_jobs') }}"
+  ><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a
+>
+<a href="{{ url_for('employer_applicants') }}" class="active"
+  ><span class="nav-icon">{{ icon('users') }}</span> Applicants</a
+>
+<a href="{{ url_for('employer_analytics') }}"
+  ><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a
+>
+<a href="{{ url_for('employer_notifications') }}"
+  ><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a
+>
+<a href="{{ url_for('company_profile') }}"
+  ><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %}
+<a
+  href="{{ url_for('employer_applicant_detail', app_id=a.id) }}"
+  style="
+    font-size: 13px;
+    color: #888;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  "
+  >{{ icon('list', 14) }} Back to Applicant Detail</a
+>
+
+<div class="card" style="max-width: 820px; margin-top: 16px">
+  <div class="card-header">
+    <h3>{{ a.full_name }} — Round 1 Report</h3>
+    <p style="font-size: 13px; color: #888">{{ a.job_title }}</p>
+  </div>
+  <div style="display: flex; gap: 24px; flex-wrap: wrap; margin: 16px 0 8px">
+    <div>
+      <div
+        style="font-size:24px;font-weight:700;color:{{ '#16a34a' if a.round1_verdict == 'pass' else '#c0392b' }};"
+      >
+        {{ a.round1_score }}%
+      </div>
+      <div style="font-size: 11.5px; color: #888">
+        Overall &middot; {{ a.round1_verdict }}
+      </div>
+    </div>
+    {% if session %}
+    <div>
+      <div style="font-size: 24px; font-weight: 700">
+        {{ session.mcq_correct if session.mcq_correct is not none else '—' }}/{{
+        session.mcq_total if session.mcq_total is not none else '—' }}
+      </div>
+      <div style="font-size: 11.5px; color: #888">Skills MCQ correct</div>
+    </div>
+    <div>
+      <div style="font-size: 24px; font-weight: 700">
+        {{ session.round2_score if session.round2_score is not none else '—'
+        }}{% if session.round2_score is not none %}%{% endif %}
+      </div>
+      <div style="font-size: 11.5px; color: #888">
+        Experience &amp; Projects
+      </div>
+    </div>
+    <div>
+      <div style="font-size: 24px; font-weight: 700">
+        {{ session.round3_score if session.round3_score is not none else '—'
+        }}{% if session.round3_score is not none %}%{% endif %}
+      </div>
+      <div style="font-size: 11.5px; color: #888">Role Fit</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if mcq %}
+<div class="card" style="max-width: 820px; margin-top: 16px">
+  <div class="card-header"><h3>Skills MCQ — question by question</h3></div>
+  <div
+    style="display: flex; flex-direction: column; gap: 2px; margin-top: 10px"
+  >
+    {% for r in mcq %}
+    <div style="padding: 14px 0; border-bottom: 1px solid #f0f0f3">
+      <div
+        style="
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          margin-bottom: 8px;
+        "
+      >
+        <span
+          style="flex-shrink:0;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                             background:{{ '#ecfdf5' if r.is_correct else '#fdeef1' }};color:{{ '#16a34a' if r.is_correct else '#d1435b' }};"
+        >
+          {{ icon('check', 13) if r.is_correct else icon('x', 13) }}
+        </span>
+        <div style="flex: 1">
+          <div
+            style="
+              font-size: 11px;
+              font-weight: 600;
+              color: #4338ca;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
+              margin-bottom: 3px;
+            "
+          >
+            {{ r.skill }}
+          </div>
+          <div style="font-size: 14px; font-weight: 500">{{ r.question }}</div>
+        </div>
+      </div>
+      <div style="padding-left: 32px; font-size: 12.5px; color: #555">
+        <div>
+          Candidate answered:
+          <strong style="color:{{ '#16a34a' if r.is_correct else '#d1435b' }};"
+            >{{ r.selected_text or '(no answer)' }}</strong
+          >
+        </div>
+        {% if not r.is_correct and r.model_answer %}
+        <div style="margin-top: 2px">
+          Correct answer: <strong>{{ r.model_answer }}</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %} {% if subround2 %}
+<div class="card" style="max-width: 820px; margin-top: 16px">
+  <div class="card-header"><h3>Experience &amp; Projects — answers</h3></div>
+  <div
+    style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px"
+  >
+    {% for r in subround2 %}
+    <div style="padding-bottom: 16px; border-bottom: 1px solid #f0f0f3">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 8px;
+        "
+      >
+        <div style="font-size: 14px; font-weight: 500; flex: 1">
+          {{ r.question }}
+        </div>
+        <span
+          class="match-badge {{ 'high' if r.score >= 7 else ('mid' if r.score >= 4 else 'low') }}"
+          style="flex-shrink: 0"
+          >{{ r.score }}/10</span
+        >
+      </div>
+      <p
+        style="
+          font-size: 12.5px;
+          color: #555;
+          background: #fbfbfe;
+          border: 1px solid #eee;
+          border-radius: 8px;
+          padding: 10px 12px;
+          margin-bottom: 8px;
+          white-space: pre-wrap;
+        "
+      >
+        {{ r.candidate_answer }}
+      </p>
+      {% if r.justification %}
+      <p style="font-size: 11.5px; color: #888">{{ r.justification }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %} {% if subround3 %}
+<div class="card" style="max-width: 820px; margin-top: 16px">
+  <div class="card-header"><h3>Role Fit — answers</h3></div>
+  <div
+    style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px"
+  >
+    {% for r in subround3 %}
+    <div style="padding-bottom: 16px; border-bottom: 1px solid #f0f0f3">
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 12px;
+          margin-bottom: 8px;
+        "
+      >
+        <div style="font-size: 14px; font-weight: 500; flex: 1">
+          {{ r.question }}
+        </div>
+        <span
+          class="match-badge {{ 'high' if r.score >= 7 else ('mid' if r.score >= 4 else 'low') }}"
+          style="flex-shrink: 0"
+          >{{ r.score }}/10</span
+        >
+      </div>
+      <p
+        style="
+          font-size: 12.5px;
+          color: #555;
+          background: #fbfbfe;
+          border: 1px solid #eee;
+          border-radius: 8px;
+          padding: 10px 12px;
+          margin-bottom: 8px;
+          white-space: pre-wrap;
+        "
+      >
+        {{ r.candidate_answer }}
+      </p>
+      {% if r.justification %}
+      <p style="font-size: 11.5px; color: #888">{{ r.justification }}</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %} {% if not mcq and not subround2 and not subround3 %}
+<div class="empty-state" style="margin-top: 16px">
+  <h4>No Round 1 responses yet</h4>
+  <p>This candidate hasn't completed the assessment.</p>
+</div>
+{% endif %} {% endblock %}
