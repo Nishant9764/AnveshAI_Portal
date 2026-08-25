@@ -1,12 +1,35 @@
-{% extends "test_base.html" %}
-{% block title %}Link Not Found{% endblock %}
-{% block content %}
-<div class="card" style="text-align:center;">
-  <div style="font-size:40px;margin-bottom:14px;">🔗</div>
-  <h2 style="font-size:20px;margin-bottom:12px;">This link isn't valid</h2>
-  <p style="color:var(--muted);font-size:14px;">
+{% extends "test_base.html" %} {% block title %}Link Not Found{% endblock %} {%
+block content %}
+<div class="card status-card">
+  <div class="status-icon neutral">&#128279;</div>
+  <h2 style="font-size: 19px; margin-bottom: 12px; font-weight: 700">
+    This link isn't valid
+  </h2>
+  <p style="color: var(--muted); font-size: 14px">
     This assessment link may have expired or been mistyped. Please use the link
-    from your invitation email, or contact the employer if you believe this is an error.
+    from your invitation email, or reach out to the employer if you believe this
+    is an error.
   </p>
 </div>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.neutral {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+</style>
 {% endblock %}

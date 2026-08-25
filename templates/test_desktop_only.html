@@ -1,14 +1,43 @@
-{% extends "test_base.html" %}
-{% block title %}Desktop Required{% endblock %}
+{% extends "test_base.html" %} {% block title %}Desktop Required{% endblock %}
 {% block content %}
-<div class="card" style="text-align:center;">
-  <div style="font-size:40px;margin-bottom:14px;">🖥️</div>
-  <h2 style="font-size:20px;margin-bottom:12px;">This assessment requires a desktop or laptop</h2>
-  <p style="color:var(--muted);font-size:14px;line-height:1.7;max-width:480px;margin:0 auto;">
-    This technical assessment needs a physical keyboard and a full-screen browser
-    to accurately measure your typing and problem-solving. It isn't supported on
-    mobile devices. Please open the link from your email on a desktop or laptop
-    computer to begin.
+<div class="card status-card">
+  <div class="status-icon neutral">&#128421;</div>
+  <h2 style="font-size: 19px; margin-bottom: 12px; font-weight: 700">
+    Please switch to a desktop or laptop
+  </h2>
+  <p
+    style="
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto;
+    "
+  >
+    This assessment needs a physical keyboard and a full-screen browser window
+    to work properly, so it isn't available on mobile. Please open the link from
+    your email on a desktop or laptop to continue.
   </p>
 </div>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.neutral {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+</style>
 {% endblock %}

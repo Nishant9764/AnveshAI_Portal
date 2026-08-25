@@ -1,13 +1,47 @@
-{% extends "test_base.html" %}
-{% block title %}Assessment Complete{% endblock %}
-{% block content %}
-<div class="card" style="text-align:center;">
-  <div style="font-size:40px;margin-bottom:14px;">🙏</div>
-  <h2 style="font-size:20px;margin-bottom:12px;">Thank you for answering all the questions</h2>
-  <p style="color:var(--muted);font-size:14px;line-height:1.7;max-width:480px;margin:0 auto;">
-    That completes what we needed from this round. We've recorded your responses,
-    and the employer will follow up separately with next steps. We appreciate the
-    time you put into this.
+{% extends "test_base.html" %} {% block title %}Thank You{% endblock %} {% block
+content %}
+<div class="card status-card">
+  <div class="status-icon neutral">&#128075;</div>
+  <h2 style="font-size: 20px; margin-bottom: 12px; font-weight: 700">
+    Thank you for your time
+  </h2>
+  <p
+    style="
+      color: var(--text);
+      font-size: 14.5px;
+      line-height: 1.8;
+      max-width: 440px;
+      margin: 0 auto;
+    "
+  >
+    That's everything we needed for this stage. We've recorded your responses,
+    and the employer will follow up separately with next steps. We appreciate
+    you taking the time.
   </p>
 </div>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .status-icon.neutral {
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+</style>
 {% endblock %}

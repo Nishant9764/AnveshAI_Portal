@@ -1,12 +1,35 @@
-{% extends "test_base.html" %}
-{% block title %}Assessment Already Completed{% endblock %}
+{% extends "test_base.html" %} {% block title %}Already Completed{% endblock %}
 {% block content %}
-<div class="card" style="text-align:center;">
-  <div style="font-size:40px;margin-bottom:14px;">✅</div>
-  <h2 style="font-size:20px;margin-bottom:12px;">This assessment is already complete</h2>
-  <p style="color:var(--muted);font-size:14px;">
-    You've already finished (or this link is no longer active for) Round 1. If you
-    think this is a mistake, reach out to the employer directly.
+<div class="card status-card">
+  <div class="status-icon success">&#10003;</div>
+  <h2 style="font-size: 19px; margin-bottom: 12px; font-weight: 700">
+    This assessment is already complete
+  </h2>
+  <p style="color: var(--muted); font-size: 14px">
+    You've already finished (or this link is no longer active for) this
+    assessment. If you think this is a mistake, reach out to the employer
+    directly.
   </p>
 </div>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+</style>
 {% endblock %}
