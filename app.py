@@ -910,6 +910,125 @@ def register_routes(app):
             top_skills=top_skills,
         )
 
+    @app.route("/employer/notifications")
+    @login_required(role="employer")
+    def employer_notifications():
+        """A real activity feed derived from existing data — new
+        applications, Round 1 completions, and high-scoring candidates
+        worth a look — rather than a full messaging inbox, which is a
+        materially bigger feature (needs its own data model, real-time
+        delivery, etc.). This gives genuine, immediately useful signal
+        without overpromising something that isn't built yet."""
+        employer_id = session["user_id"]
+
+        recent_applications = db.query_all(
+            """SELECT a.id, a.applied_at, a.match_score, u.full_name, j.title AS job_title
+               FROM applications a
+               JOIN users u ON u.id = a.candidate_id
+               JOIN jobs j ON j.id = a.job_id
+               WHERE j.employer_id = %s
+               ORDER BY a.applied_at DESC LIMIT 15""",
+            (employer_id,),
+        )
+        recent_completions = db.query_all(
+            """SELECT a.id, a.round1_completed_at, a.round1_score, a.round1_verdict,
+                      u.full_name, j.title AS job_title
+               FROM applications a
+               JOIN users u ON u.id = a.candidate_id
+               JOIN jobs j ON j.id = a.job_id
+               WHERE j.employer_id = %s AND a.round1_completed_at IS NOT NULL
+               ORDER BY a.round1_completed_at DESC LIMIT 15""",
+            (employer_id,),
+        )
+
+        events = []
+        for r in recent_applications:
+            events.append({
+                "type": "applied", "at": r["applied_at"], "app_id": r["id"],
+                "text": f"{r['full_name']} applied for {r['job_title']}",
+                "meta": f"{r['match_score']}% match" if r["match_score"] is not None else None,
+            })
+        for r in recent_completions:
+            events.append({
+                "type": "round1_pass" if r["round1_verdict"] == "pass" else "round1_reject",
+                "at": r["round1_completed_at"], "app_id": r["id"],
+                "text": f"{r['full_name']} completed Round 1 for {r['job_title']}",
+                "meta": f"{r['round1_score']}% — {r['round1_verdict']}",
+            })
+        events.sort(key=lambda e: e["at"] or datetime.min, reverse=True)
+
+        return render_template("employer_notifications.html", events=events[:25])
+
+    @app.route("/employer/analytics")
+    @login_required(role="employer")
+    def employer_analytics():
+        employer_id = session["user_id"]
+
+        funnel = db.query_one(
+            """SELECT
+                 COUNT(*) AS applied,
+                 COUNT(*) FILTER (WHERE a.screening_status = 'done') AS scored,
+                 COUNT(*) FILTER (WHERE a.passed_ats) AS passed_ats,
+                 COUNT(*) FILTER (WHERE a.round1_completed_at IS NOT NULL) AS completed_round1,
+                 COUNT(*) FILTER (WHERE a.round1_verdict = 'pass') AS passed_round1,
+                 COUNT(*) FILTER (WHERE a.status = 'Shortlisted') AS shortlisted,
+                 COUNT(*) FILTER (WHERE a.status = 'Interview') AS interview,
+                 COUNT(*) FILTER (WHERE a.status = 'Offered') AS offered,
+                 COUNT(*) FILTER (WHERE a.status = 'Rejected') AS rejected
+               FROM applications a JOIN jobs j ON j.id = a.job_id
+               WHERE j.employer_id = %s""",
+            (employer_id,),
+        ) or {}
+
+        averages = db.query_one(
+            """SELECT
+                 ROUND(AVG(a.match_score)) AS avg_match_score,
+                 ROUND(AVG(a.technical_match_score)) AS avg_technical,
+                 ROUND(AVG(a.experience_match_score)) AS avg_experience,
+                 ROUND(AVG(a.soft_skills_score)) AS avg_soft_skills,
+                 ROUND(AVG(a.impact_score)) AS avg_impact,
+                 ROUND(AVG(a.round1_score)) AS avg_round1_score
+               FROM applications a JOIN jobs j ON j.id = a.job_id
+               WHERE j.employer_id = %s AND a.screening_status = 'done'""",
+            (employer_id,),
+        ) or {}
+
+        per_job = db.query_all(
+            """SELECT j.id, j.title,
+                 COUNT(a.id) AS applicant_count,
+                 COUNT(a.id) FILTER (WHERE a.passed_ats) AS passed_ats_count,
+                 COUNT(a.id) FILTER (WHERE a.round1_verdict = 'pass') AS passed_round1_count,
+                 ROUND(AVG(a.match_score)) AS avg_match_score
+               FROM jobs j LEFT JOIN applications a ON a.job_id = j.id
+               WHERE j.employer_id = %s
+               GROUP BY j.id, j.title
+               ORDER BY applicant_count DESC LIMIT 10""",
+            (employer_id,),
+        )
+
+        # Most common red flags, aggregated across all applicants — tells
+        # an employer what pattern of resume issues shows up most.
+        flag_rows = db.query_all(
+            "SELECT a.red_flags FROM applications a JOIN jobs j ON j.id=a.job_id WHERE j.employer_id=%s AND a.red_flags IS NOT NULL",
+            (employer_id,),
+        )
+        flag_counts = {}
+        for row in flag_rows:
+            flags = row["red_flags"]
+            if isinstance(flags, str):
+                try:
+                    flags = json.loads(flags)
+                except (TypeError, ValueError):
+                    flags = []
+            for f in (flags or []):
+                flag_counts[f] = flag_counts.get(f, 0) + 1
+        top_flags = sorted(flag_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        return render_template(
+            "employer_analytics.html", funnel=funnel, averages=averages,
+            per_job=per_job, top_flags=top_flags,
+        )
+
     @app.route("/employer/question-bank")
     @login_required(role="employer")
     def question_bank_diagnostic():
@@ -1139,6 +1258,52 @@ def register_routes(app):
         report = integrity.get_integrity_report(row["round1_session_id"])
         return render_template("integrity_report.html", report=report, app_id=app_id)
 
+    @app.route("/employer/applicants/<int:app_id>/round1-report")
+    @login_required(role="employer")
+    def applicant_round1_report(app_id):
+        """The actual per-question breakdown: which MCQs the candidate got
+        right/wrong, and their full subjective answers with the AI's
+        score + reasoning for each — not just an aggregate percentage."""
+        employer_id = session["user_id"]
+        a = db.query_one(
+            """SELECT a.id, a.round1_session_id, a.round1_score, a.round1_verdict,
+                      a.mcq_pct AS app_mcq_pct, u.full_name, j.title AS job_title
+               FROM applications a
+               JOIN jobs j ON j.id = a.job_id
+               JOIN users u ON u.id = a.candidate_id
+               WHERE a.id=%s AND j.employer_id=%s""",
+            (app_id, employer_id),
+        )
+        if not a or not a["round1_session_id"]:
+            abort(404)
+
+        session_row = db.query_one(
+            "SELECT mcq_total, mcq_correct, mcq_pct, round2_score, round3_score FROM sessions WHERE id=%s",
+            (a["round1_session_id"],),
+        )
+        all_responses = models.get_responses(a["round1_session_id"])
+
+        mcq = [r for r in all_responses if r["round_name"] == "round1_mcq"]
+        subround2 = [r for r in all_responses if r["round_name"] == "round2"]
+        subround3 = [r for r in all_responses if r["round_name"] == "round3"]
+
+        letters = ["A", "B", "C", "D", "E", "F"]
+        for r in mcq:
+            opts = r.get("options") or []
+            if isinstance(opts, str):
+                try:
+                    opts = json.loads(opts)
+                except (TypeError, ValueError):
+                    opts = []
+            r["lettered_options"] = list(zip(letters, opts))
+            selected_idx = letters.index(r["candidate_answer"]) if r.get("candidate_answer") in letters else None
+            r["selected_text"] = opts[selected_idx] if selected_idx is not None and selected_idx < len(opts) else r.get("candidate_answer")
+
+        return render_template(
+            "applicant_round1_report.html", a=a, session=session_row,
+            mcq=mcq, subround2=subround2, subround3=subround3,
+        )
+
     @app.route("/employer/company-profile", methods=["GET", "POST"])
     @login_required(role="employer")
     def company_profile():
@@ -1243,6 +1408,30 @@ def register_routes(app):
                 except (TypeError, ValueError):
                     row[key] = []
         return row
+
+    def _send_rejection_for_application(application_id):
+        """Any time the SYSTEM auto-rejects a candidate (baseline miss,
+        Round 1 MCQ gate, final Round 1 verdict, or an anti-cheat
+        termination), the rejection email fires automatically here — the
+        employer never has to manually flip the status dropdown to
+        'Rejected' for the candidate to be notified. Safe to call more
+        than once: skips silently if already emailed."""
+        row = db.query_one(
+            """SELECT a.rejection_emailed_at, u.full_name, u.email, j.title, j.company_name
+               FROM applications a
+               JOIN users u ON u.id = a.candidate_id
+               JOIN jobs j ON j.id = a.job_id
+               WHERE a.id = %s""",
+            (application_id,),
+        )
+        if not row or row["rejection_emailed_at"]:
+            return
+        sent = mailer.send_rejection_email(
+            row["email"], row["full_name"], row["title"], row["company_name"],
+            application_id=application_id,
+        )
+        if sent:
+            db.execute("UPDATE applications SET rejection_emailed_at=NOW() WHERE id=%s", (application_id,))
 
     @app.route("/test/start/<invite_token>")
     def test_start(invite_token):
@@ -1564,6 +1753,7 @@ def register_routes(app):
         # every sub-round in good faith.
         if result["verdict"] == "reject":
             db.execute("UPDATE applications SET status='Rejected' WHERE id=%s", (test_session["application_id"],))
+            _send_rejection_for_application(test_session["application_id"])
 
         top_skills = (test_session.get("skills_tested") or [])[:2]
         return render_template("test_complete.html", top_skills=top_skills)
@@ -1583,11 +1773,10 @@ def register_routes(app):
         if result["should_terminate"]:
             models.update_session(session_id, status="terminated",
                                    round1_verdict="reject", completed_at=datetime.now())
-            db.execute(
-                "UPDATE applications SET status='Rejected' WHERE id="
-                "(SELECT application_id FROM sessions WHERE id=%s)",
-                (session_id,),
-            )
+            row = db.query_one("SELECT application_id FROM sessions WHERE id=%s", (session_id,))
+            if row and row["application_id"]:
+                db.execute("UPDATE applications SET status='Rejected' WHERE id=%s", (row["application_id"],))
+                _send_rejection_for_application(row["application_id"])
         return jsonify(result)
 
     @app.route("/employer/applicants/<int:app_id>/integrity-report-json")
