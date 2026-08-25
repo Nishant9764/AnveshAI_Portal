@@ -1,27 +1,27 @@
-{% extends "dashboard_base.html" %} {% block title %}Apply — {{ job.title }} -
-Anvesh AI{% endblock %} {% block page_title %}Apply to {{ job.title }}{%
-endblock %} {% block sidebar_nav %}
+{% extends "dashboard_base.html" %} {% from "_icons.html" import icon %} {%
+block title %}Apply — {{ job.title }} - Anvesh AI{% endblock %} {% block
+page_title %}Apply to {{ job.title }}{% endblock %} {% block sidebar_nav %}
 <a href="{{ url_for('candidate_dashboard') }}"
-  ><span class="nav-icon">&#8962;</span> Home</a
+  ><span class="nav-icon">{{ icon('home') }}</span> Home</a
 >
 <a href="{{ url_for('candidate_jobs') }}" class="active"
-  ><span class="nav-icon">&#128203;</span> Jobs Feed</a
+  ><span class="nav-icon">{{ icon('list') }}</span> Jobs Feed</a
 >
 <a href="{{ url_for('saved_jobs_page') }}"
-  ><span class="nav-icon">&#9734;</span> Saved Jobs</a
+  ><span class="nav-icon">{{ icon('star') }}</span> Saved Jobs</a
 >
 <a href="{{ url_for('candidate_applications') }}"
-  ><span class="nav-icon">&#128196;</span> My Applications</a
+  ><span class="nav-icon">{{ icon('file') }}</span> My Applications</a
 >
 <a href="{{ url_for('resume_score') }}"
-  ><span class="nav-icon">&#128202;</span> Resume Score</a
+  ><span class="nav-icon">{{ icon('bar-chart') }}</span> Resume Score</a
 >
-<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
+<a href="#"><span class="nav-icon">{{ icon('mail') }}</span> Messages</a>
 <a href="{{ url_for('candidate_profile') }}"
-  ><span class="nav-icon">&#128100;</span> Profile</a
+  ><span class="nav-icon">{{ icon('user') }}</span> Profile</a
 >
 <a href="{{ url_for('settings') }}"
-  ><span class="nav-icon">&#9881;</span> Settings</a
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
 >
 {% endblock %} {% block dashboard_content %}
 <div class="card" style="max-width: 640px">
