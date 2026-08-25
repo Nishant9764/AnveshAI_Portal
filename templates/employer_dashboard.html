@@ -1,181 +1,290 @@
-{% extends "dashboard_base.html" %}
-{% block title %}Employer Dashboard - Anvesh AI{% endblock %}
-{% block page_title %}Employer Dashboard{% endblock %}
-
-{% block topbar_actions %}
-<a href="{{ url_for('create_job') }}" class="btn btn-primary btn-sm">+ Post a Job</a>
-{% endblock %}
-
-{% block sidebar_nav %}
-<a href="{{ url_for('employer_dashboard') }}" class="active"><span class="nav-icon">&#8962;</span> Dashboard</a>
-<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
-<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
-<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">&#128101;</span> Applicants</a>
-<a href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
-<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
-<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
-<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
-{% endblock %}
-
-{% block dashboard_content %}
+{% extends "dashboard_base.html" %} {% from "_icons.html" import icon %} {%
+block title %}Employer Dashboard - Anvesh AI{% endblock %} {% block page_title
+%}Employer Dashboard{% endblock %} {% block topbar_actions %}
+<a href="{{ url_for('create_job') }}" class="btn btn-primary btn-sm"
+  >+ Post a Job</a
+>
+{% endblock %} {% block sidebar_nav %}
+<a href="{{ url_for('employer_dashboard') }}" class="active"
+  ><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a
+>
+<a href="{{ url_for('create_job') }}"
+  ><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a
+>
+<a href="{{ url_for('manage_jobs') }}"
+  ><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a
+>
+<a href="{{ url_for('employer_applicants') }}"
+  ><span class="nav-icon">{{ icon('users') }}</span> Applicants</a
+>
+<a href="{{ url_for('employer_analytics') }}"
+  ><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a
+>
+<a href="{{ url_for('employer_notifications') }}"
+  ><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a
+>
+<a href="{{ url_for('company_profile') }}"
+  ><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %}
 
 <div class="stats-row">
-    <div class="stat-card">
-        <div class="stat-label">Total Jobs</div>
-        <div class="stat-value">{{ stats.total_jobs }}</div>
-        <div class="stat-delta">+12% this month</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Total Applicants</div>
-        <div class="stat-value">{{ stats.total_applicants }}</div>
-        <div class="stat-delta">+18% this month</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Shortlisted</div>
-        <div class="stat-value">{{ stats.shortlisted }}</div>
-        <div class="stat-delta">+8% this month</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Interviews</div>
-        <div class="stat-value">{{ stats.interviews }}</div>
-        <div class="stat-delta">+5% this month</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-label">Offers Sent</div>
-        <div class="stat-value">{{ stats.offers }}</div>
-        <div class="stat-delta">+3% this month</div>
-    </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Jobs</div>
+    <div class="stat-value">{{ stats.total_jobs }}</div>
+    <div class="stat-delta">+12% this month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Applicants</div>
+    <div class="stat-value">{{ stats.total_applicants }}</div>
+    <div class="stat-delta">+18% this month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Shortlisted</div>
+    <div class="stat-value">{{ stats.shortlisted }}</div>
+    <div class="stat-delta">+8% this month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Interviews</div>
+    <div class="stat-value">{{ stats.interviews }}</div>
+    <div class="stat-delta">+5% this month</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Offers Sent</div>
+    <div class="stat-value">{{ stats.offers }}</div>
+    <div class="stat-delta">+3% this month</div>
+  </div>
 </div>
 
 <div class="dashboard-grid">
-    <div style="display:flex; flex-direction:column; gap:20px;">
-        <div class="card">
-            <div class="card-header">
-                <h3>Applications Overview</h3>
-                <span class="filter-pill" style="font-size:12.5px; padding:6px 12px;">This Week &#9662;</span>
-            </div>
-            <div class="chart-placeholder">
-                <svg width="100%" height="220" viewBox="0 0 600 220" preserveAspectRatio="none">
-                    <line x1="40" y1="10" x2="40" y2="190" stroke="#eef0f4" stroke-width="1"/>
-                    {% for y in range(0, 201, 40) %}
-                    <line x1="40" y1="{{ 190 - y }}" x2="580" y2="{{ 190 - y }}" stroke="#f3f4f6" stroke-width="1"/>
-                    {% endfor %}
-                    <polyline points="60,90 140,140 220,60 300,110 380,70 460,150 540,80"
-                              fill="none" stroke="#4338ca" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    {% for pt in [['60','90'], ['140','140'], ['220','60'], ['300','110'], ['380','70'], ['460','150'], ['540','80']] %}
-                    <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="4" fill="#4338ca"/>
-                    {% endfor %}
-                    <text x="60" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Mon</text>
-                    <text x="140" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Tue</text>
-                    <text x="220" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Wed</text>
-                    <text x="300" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Thu</text>
-                    <text x="380" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Fri</text>
-                    <text x="460" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Sat</text>
-                    <text x="540" y="210" font-size="11" fill="#9ca3af" text-anchor="middle">Sun</text>
-                </svg>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h3>Recent Job Posts</h3>
-                <a href="{{ url_for('manage_jobs') }}" class="view-all">View All</a>
-            </div>
-            {% if recent_jobs %}
-                {% for job in recent_jobs %}
-                <div class="job-post-row">
-                    <div class="job-post-info">
-                        <p class="job-post-title">{{ job.title }}</p>
-                        <p class="job-post-location">{{ job.location }}</p>
-                    </div>
-                    <div class="job-post-stats">
-                        <div class="applicant-count">{{ job.applicant_count }}<span>Applicants</span></div>
-                        <span class="status-chip {{ job.status|lower }}">{{ job.status }}</span>
-                        <span class="post-time">{{ job.posted_at|time_ago }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">&#128203;</div>
-                    <h4>No jobs posted yet</h4>
-                    <p>Post your first job to start receiving applicants.</p>
-                    <a href="{{ url_for('create_job') }}" class="btn btn-primary">+ Post a Job</a>
-                </div>
-            {% endif %}
-        </div>
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="card">
+      <div class="card-header">
+        <h3>Applications Overview</h3>
+        <span class="filter-pill" style="font-size: 12.5px; padding: 6px 12px"
+          >This Week &#9662;</span
+        >
+      </div>
+      <div class="chart-placeholder">
+        <svg
+          width="100%"
+          height="220"
+          viewBox="0 0 600 220"
+          preserveAspectRatio="none"
+        >
+          <line
+            x1="40"
+            y1="10"
+            x2="40"
+            y2="190"
+            stroke="#eef0f4"
+            stroke-width="1"
+          />
+          {% for y in range(0, 201, 40) %}
+          <line
+            x1="40"
+            y1="{{ 190 - y }}"
+            x2="580"
+            y2="{{ 190 - y }}"
+            stroke="#f3f4f6"
+            stroke-width="1"
+          />
+          {% endfor %}
+          <polyline
+            points="60,90 140,140 220,60 300,110 380,70 460,150 540,80"
+            fill="none"
+            stroke="#4338ca"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          {% for pt in [['60','90'], ['140','140'], ['220','60'], ['300','110'],
+          ['380','70'], ['460','150'], ['540','80']] %}
+          <circle cx="{{ pt[0] }}" cy="{{ pt[1] }}" r="4" fill="#4338ca" />
+          {% endfor %}
+          <text
+            x="60"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Mon
+          </text>
+          <text
+            x="140"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Tue
+          </text>
+          <text
+            x="220"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Wed
+          </text>
+          <text
+            x="300"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Thu
+          </text>
+          <text
+            x="380"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Fri
+          </text>
+          <text
+            x="460"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Sat
+          </text>
+          <text
+            x="540"
+            y="210"
+            font-size="11"
+            fill="#9ca3af"
+            text-anchor="middle"
+          >
+            Sun
+          </text>
+        </svg>
+      </div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:20px;">
-        <div class="card">
-            <div class="card-header">
-                <h3>Recent Applicants</h3>
-                <a href="{{ url_for('employer_applicants') }}" class="view-all">View All</a>
-            </div>
-            {% if recent_applicants %}
-                {% for app in recent_applicants %}
-                <div class="applicant-row">
-                    <div class="avatar-circle">{{ app.avatar_initials or app.full_name[0] }}</div>
-                    <div class="applicant-info">
-                        <p class="applicant-name">{{ app.full_name }}</p>
-                        <p class="applicant-role">{{ app.job_title }}</p>
-                    </div>
-                    <div class="applicant-meta">
-                        <div class="applicant-time">{{ app.applied_at|time_ago }}</div>
-                        {% set m = app.match_score %}
-                        <span class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}">{{ m }}% Match</span>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">&#128101;</div>
-                    <h4>No applicants yet</h4>
-                    <p>Applicants will show up here once people apply.</p>
-                </div>
-            {% endif %}
+    <div class="card">
+      <div class="card-header">
+        <h3>Recent Job Posts</h3>
+        <a href="{{ url_for('manage_jobs') }}" class="view-all">View All</a>
+      </div>
+      {% if recent_jobs %} {% for job in recent_jobs %}
+      <div class="job-post-row">
+        <div class="job-post-info">
+          <p class="job-post-title">{{ job.title }}</p>
+          <p class="job-post-location">{{ job.location }}</p>
         </div>
-
-        <div class="card">
-            <div class="card-header"><h3>Top Skills in Demand</h3></div>
-            {% if top_skills %}
-                {% set colors = ['#4338ca', '#7c3aed', '#2563eb', '#db2777', '#9ca3af'] %}
-                {% set total = top_skills|sum(attribute=1) %}
-                <div style="display:flex; justify-content:center; margin-bottom: 16px;">
-                    <svg width="140" height="140" viewBox="0 0 140 140">
-                        {% set circumference = 2 * 3.14159 * 56 %}
-                        {% set running = 0 %}
-                        {% for skill, count in top_skills %}
-                            {% set pct = count / total %}
-                            {% set dash = circumference * pct %}
-                            {% set gap = circumference - dash %}
-                            {% set rotate = (running / total) * 360 %}
-                            <circle cx="70" cy="70" r="56" fill="none" stroke="{{ colors[loop.index0 % colors|length] }}"
-                                    stroke-width="22" stroke-dasharray="{{ dash }} {{ gap }}"
-                                    transform="rotate({{ rotate - 90 }} 70 70)"/>
-                            {% set running = running + count %}
-                        {% endfor %}
-                    </svg>
-                </div>
-                <div class="skill-pill-list">
-                    {% for skill, count in top_skills %}
-                    <div class="skill-pill">
-                        <span style="display:flex; align-items:center; gap:8px;">
-                            <span style="width:8px;height:8px;border-radius:50%;background:{{ colors[loop.index0 % colors|length] }};display:inline-block;"></span>
-                            {{ skill }}
-                        </span>
-                        <span>{{ (count / total * 100)|round|int }}%</span>
-                    </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">&#128202;</div>
-                    <h4>No data yet</h4>
-                    <p>Post jobs with a tech stack to see skill demand here.</p>
-                </div>
-            {% endif %}
+        <div class="job-post-stats">
+          <div class="applicant-count">
+            {{ job.applicant_count }}<span>Applicants</span>
+          </div>
+          <span class="status-chip {{ job.status|lower }}"
+            >{{ job.status }}</span
+          >
+          <span class="post-time">{{ job.posted_at|time_ago }}</span>
         </div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128203;</div>
+        <h4>No jobs posted yet</h4>
+        <p>Post your first job to start receiving applicants.</p>
+        <a href="{{ url_for('create_job') }}" class="btn btn-primary"
+          >+ Post a Job</a
+        >
+      </div>
+      {% endif %}
     </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px">
+    <div class="card">
+      <div class="card-header">
+        <h3>Recent Applicants</h3>
+        <a href="{{ url_for('employer_applicants') }}" class="view-all"
+          >View All</a
+        >
+      </div>
+      {% if recent_applicants %} {% for app in recent_applicants %}
+      <div class="applicant-row">
+        <div class="avatar-circle">
+          {{ app.avatar_initials or app.full_name[0] }}
+        </div>
+        <div class="applicant-info">
+          <p class="applicant-name">{{ app.full_name }}</p>
+          <p class="applicant-role">{{ app.job_title }}</p>
+        </div>
+        <div class="applicant-meta">
+          <div class="applicant-time">{{ app.applied_at|time_ago }}</div>
+          {% set m = app.match_score %}
+          <span
+            class="match-badge {{ 'high' if m >= 75 else ('mid' if m >= 50 else 'low') }}"
+            >{{ m }}% Match</span
+          >
+        </div>
+      </div>
+      {% endfor %} {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128101;</div>
+        <h4>No applicants yet</h4>
+        <p>Applicants will show up here once people apply.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3>Top Skills in Demand</h3></div>
+      {% if top_skills %} {% set colors = ['#4338ca', '#7c3aed', '#2563eb',
+      '#db2777', '#9ca3af'] %} {% set total = top_skills|sum(attribute=1) %}
+      <div style="display: flex; justify-content: center; margin-bottom: 16px">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          {% set circumference = 2 * 3.14159 * 56 %} {% set running = 0 %} {%
+          for skill, count in top_skills %} {% set pct = count / total %} {% set
+          dash = circumference * pct %} {% set gap = circumference - dash %} {%
+          set rotate = (running / total) * 360 %}
+          <circle
+            cx="70"
+            cy="70"
+            r="56"
+            fill="none"
+            stroke="{{ colors[loop.index0 % colors|length] }}"
+            stroke-width="22"
+            stroke-dasharray="{{ dash }} {{ gap }}"
+            transform="rotate({{ rotate - 90 }} 70 70)"
+          />
+          {% set running = running + count %} {% endfor %}
+        </svg>
+      </div>
+      <div class="skill-pill-list">
+        {% for skill, count in top_skills %}
+        <div class="skill-pill">
+          <span style="display: flex; align-items: center; gap: 8px">
+            <span
+              style="width:8px;height:8px;border-radius:50%;background:{{ colors[loop.index0 % colors|length] }};display:inline-block;"
+            ></span>
+            {{ skill }}
+          </span>
+          <span>{{ (count / total * 100)|round|int }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">&#128202;</div>
+        <h4>No data yet</h4>
+        <p>Post jobs with a tech stack to see skill demand here.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -1,16 +1,17 @@
 {% extends "dashboard_base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Applicants - Anvesh AI{% endblock %}
 {% block page_title %}Applicants{% endblock %}
 
 {% block sidebar_nav %}
-<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
-<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
-<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
-<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">&#128101;</span> Applicants</a>
-<a href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
-<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
-<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
-<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">{{ icon('users') }}</span> Applicants</a>
+<a href="{{ url_for('employer_analytics') }}"><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a>
+<a href="{{ url_for('employer_notifications') }}"><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">{{ icon('settings') }}</span> Settings</a>
 {% endblock %}
 
 {% block dashboard_content %}
@@ -40,6 +41,10 @@
                         <div>
                             <div style="font-weight:600;">{{ a.full_name }}</div>
                             <div style="font-size:12px; color:var(--color-text-muted);">{{ a.email }}</div>
+                            <a href="{{ url_for('employer_applicant_detail', app_id=a.id) }}" style="font-size:11.5px;color:#4338ca;text-decoration:underline;">View Detail</a>
+                            {% if a.resume_id %}
+                            &middot; <a href="{{ url_for('view_candidate_resume_file', resume_id=a.resume_id) }}" target="_blank" style="font-size:11.5px;color:#4338ca;text-decoration:underline;">Resume</a>
+                            {% endif %}
                             {% if a.red_flags %}
                             <div style="font-size:11px;color:#c0392b;margin-top:2px;">&#9888; {{ a.red_flags|length }} red flag{{ 's' if a.red_flags|length != 1 else '' }}</div>
                             {% endif %}
@@ -98,20 +103,13 @@
                     <form method="POST" action="{{ url_for('send_invite_now', app_id=a.id) }}" style="margin-bottom:4px;">
                         <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Send Round 1 Invite</button>
                     </form>
-                    {% endif %}
-                    {% if a.round1_verdict == 'pass' and not a.round2_unlocked %}
-                    <form method="POST" action="{{ url_for('unlock_round2', app_id=a.id) }}" style="margin-bottom:4px;">
-                        <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Unlock Round 2</button>
-                    </form>
-                    {% elif a.round2_unlocked %}
-                        <div style="font-size:11px;color:var(--color-text-muted);">Round 2: {{ a.round2_score if a.round2_score is not none else 'pending' }}{% if a.round2_score is not none %}%{% endif %}</div>
-                    {% endif %}
-                    {% if a.round1_verdict == 'pass' and not a.round3_unlocked %}
-                    <form method="POST" action="{{ url_for('unlock_round3', app_id=a.id) }}">
-                        <button type="submit" class="btn btn-outline btn-sm" style="width:100%;">Unlock Round 3</button>
-                    </form>
-                    {% elif a.round3_unlocked %}
-                        <div style="font-size:11px;color:var(--color-text-muted);">Round 3: {{ a.round3_score if a.round3_score is not none else 'pending' }}{% if a.round3_score is not none %}%{% endif %}</div>
+                    {% elif a.round1_score is not none %}
+                        <div style="font-size:11px;color:var(--color-text-muted);">
+                            {% if a.round2_score is not none %}Experience: {{ a.round2_score }}%<br>{% endif %}
+                            {% if a.round3_score is not none %}Role fit: {{ a.round3_score }}%{% endif %}
+                        </div>
+                    {% else %}
+                        <span style="color:var(--color-text-faint);">—</span>
                     {% endif %}
                 </td>
                 <td>

@@ -1,14 +1,17 @@
 {% extends "dashboard_base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ a.full_name }} — Applicant Detail - Anvesh AI{% endblock %}
 {% block page_title %}Applicant Detail{% endblock %}
 
 {% block sidebar_nav %}
-<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
-<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
-<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
-<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">&#128101;</span> Applicants</a>
-<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
-<a href="{{ url_for('settings') }}"><span class="nav-icon">&#9881;</span> Settings</a>
+<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a>
+<a href="{{ url_for('create_job') }}"><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a>
+<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a>
+<a href="{{ url_for('employer_applicants') }}" class="active"><span class="nav-icon">{{ icon('users') }}</span> Applicants</a>
+<a href="{{ url_for('employer_analytics') }}"><span class="nav-icon">{{ icon('trending-up') }}</span> Analytics</a>
+<a href="{{ url_for('employer_notifications') }}"><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a>
+<a href="{{ url_for('company_profile') }}"><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a>
+<a href="{{ url_for('settings') }}"><span class="nav-icon">{{ icon('settings') }}</span> Settings</a>
 {% endblock %}
 
 {% block dashboard_content %}
@@ -120,6 +123,7 @@
         {% if a.round2_score is not none %}Experience & Projects: {{ a.round2_score }}%<br>{% endif %}
         {% if a.round3_score is not none %}Role Fit (JD): {{ a.round3_score }}%<br>{% endif %}
     </div>
+    <a href="{{ url_for('applicant_round1_report', app_id=a.id) }}" class="btn btn-outline btn-sm" style="margin-top:10px;display:inline-block;">View full question-by-question report</a>
     {% if a.session_integrity_score is not none %}
     <p style="font-size:12px;margin-top:10px;">
         Integrity: <a href="{{ url_for('applicant_integrity_report', app_id=a.id) }}" style="color:{{ '#1a7f4b' if a.session_integrity_score >= 90 else ('#c98a1f' if a.session_integrity_score >= 65 else '#c0392b') }};">{{ a.session_integrity_score }}/100</a>
