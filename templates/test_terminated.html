@@ -1,25 +1,47 @@
-{% extends "test_base.html" %}
-{% block title %}Session Ended{% endblock %}
-{% block content %}
+{% extends "test_base.html" %} {% block title %}Session Ended{% endblock %} {%
+block content %}
 <div class="card status-card">
   <div class="status-icon neutral">&#9209;</div>
-  <h2 style="font-size:19px;margin-bottom:12px;font-weight:700;">Your assessment session has ended</h2>
-  <p style="color:var(--muted);font-size:14px;line-height:1.7;max-width:440px;margin:0 auto;">
-    This session ended early based on our proctoring rules. If you believe this happened in
-    error, please reach out to the employer directly.
+  <h2 style="font-size: 19px; margin-bottom: 12px; font-weight: 700">
+    Your assessment session has ended
+  </h2>
+  <p
+    style="
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+      max-width: 440px;
+      margin: 0 auto;
+    "
+  >
+    This session ended early based on our proctoring rules. If you believe this
+    happened in error, please reach out to the employer directly.
   </p>
 </div>
 <script>
-  if (document.fullscreenElement) { document.exitFullscreen().catch(function(){}); }
-</script>
-{% endblock %}
-{% block extra_style %}
-<style>
-  .status-card { text-align: center; padding: 44px 32px; }
-  .status-icon {
-    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 18px;
-    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(function () {});
   }
-  .status-icon.neutral { background: var(--warn-bg); color: var(--warn); }
+</script>
+{% endblock %} {% block extra_style %}
+<style>
+  .status-card {
+    text-align: center;
+    padding: 44px 32px;
+  }
+  .status-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .status-icon.neutral {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
 </style>
 {% endblock %}
