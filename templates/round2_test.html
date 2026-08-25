@@ -1,55 +1,24 @@
-{% extends "test_base.html" %} {% block title %}Section 2 · Question {{ q_number
-}}{% endblock %} {% block header_right %}
-<div class="section-pill">
-  Section 2 of 3 &middot; Question {{ q_number }} / {{ q_total }}
-</div>
-{% endblock %} {% block content %}
-<div class="progress-track">
-  <div
-    class="progress-fill"
-    style="width:{{ (q_number / q_total * 100) | round | int }}%;"
-  ></div>
-</div>
-<div class="timer-row" id="timer">
-  <span class="timer-dot"></span><span id="timer-text">--:--</span>
-</div>
+{% extends "test_base.html" %}
+{% block title %}Section 2 · Question {{ q_number }}{% endblock %}
+{% block header_right %}
+<div class="section-pill">Section 2 of 3 &middot; Question {{ q_number }} / {{ q_total }}</div>
+{% endblock %}
+{% block content %}
+<div class="progress-track"><div class="progress-fill" style="width:{{ (q_number / q_total * 100) | round | int }}%;"></div></div>
+<div class="timer-row" id="timer"><span class="timer-dot"></span><span id="timer-text">--:--</span></div>
 
 <div class="card">
   <div class="q-label">Experience &amp; Projects</div>
-  <h2
-    style="
-      font-size: 17.5px;
-      line-height: 1.55;
-      margin-bottom: 18px;
-      font-weight: 600;
-    "
-  >
-    {{ question.question }}
-  </h2>
+  <h2 style="font-size:17.5px;line-height:1.55;margin-bottom:18px;font-weight:600;">{{ question.question }}</h2>
 
-  <form
-    id="answer-form"
-    method="POST"
-    action="{{ url_for('round2_answer', session_id=test_session.id) }}"
-    data-question-form
-    data-time-limit="300"
-    data-urgent-at="30"
-  >
-    <input type="hidden" name="time_taken_seconds" />
-    <input type="hidden" name="keystroke_metrics" />
+  <form id="answer-form" method="POST" action="{{ url_for('round2_answer', session_id=test_session.id) }}"
+        data-question-form data-time-limit="300" data-urgent-at="30">
+    <input type="hidden" name="time_taken_seconds">
+    <input type="hidden" name="keystroke_metrics">
     <label for="answer">Your answer</label>
-    <textarea
-      id="answer"
-      name="answer"
-      rows="8"
-      placeholder="Type your answer here — be specific."
-      required
-      data-keystroke-track
-    ></textarea>
-    <p style="font-size: 11.5px; color: var(--muted2); margin-top: 8px">
-      Copy/paste is disabled — please type your own answer.
-    </p>
-    <button type="submit" class="btn" style="margin-top: 20px">Continue</button>
+    <textarea id="answer" name="answer" rows="8" placeholder="Type your answer here — be specific." required data-keystroke-track></textarea>
+    <p style="font-size:11.5px;color:var(--muted2);margin-top:8px;">Copy/paste is disabled — please type your own answer.</p>
+    <button type="submit" class="btn" style="margin-top:20px;">Continue</button>
   </form>
 </div>
 {% endblock %}

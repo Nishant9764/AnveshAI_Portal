@@ -1,48 +1,85 @@
-{% extends "dashboard_base.html" %}
-{% block title %}Settings - Anvesh AI{% endblock %}
-{% block page_title %}Settings{% endblock %}
-
-{% block sidebar_nav %}
-{% if current_user_role == 'employer' %}
-<a href="{{ url_for('employer_dashboard') }}"><span class="nav-icon">&#8962;</span> Dashboard</a>
-<a href="{{ url_for('create_job') }}"><span class="nav-icon">&#10133;</span> Create Job</a>
-<a href="{{ url_for('manage_jobs') }}"><span class="nav-icon">&#128203;</span> Manage Jobs</a>
-<a href="{{ url_for('employer_applicants') }}"><span class="nav-icon">&#128101;</span> Applicants</a>
-<a href="#"><span class="nav-icon">&#128202;</span> Analytics</a>
-<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
-<a href="{{ url_for('company_profile') }}"><span class="nav-icon">&#127970;</span> Company Profile</a>
-<a href="{{ url_for('settings') }}" class="active"><span class="nav-icon">&#9881;</span> Settings</a>
+{% extends "dashboard_base.html" %} {% from "_icons.html" import icon %} {%
+block title %}Settings - Anvesh AI{% endblock %} {% block page_title
+%}Settings{% endblock %} {% block sidebar_nav %} {% if current_user_role ==
+'employer' %}
+<a href="{{ url_for('employer_dashboard') }}"
+  ><span class="nav-icon">{{ icon('home') }}</span> Dashboard</a
+>
+<a href="{{ url_for('create_job') }}"
+  ><span class="nav-icon">{{ icon('plus') }}</span> Create Job</a
+>
+<a href="{{ url_for('manage_jobs') }}"
+  ><span class="nav-icon">{{ icon('list') }}</span> Manage Jobs</a
+>
+<a href="{{ url_for('employer_applicants') }}"
+  ><span class="nav-icon">{{ icon('users') }}</span> Applicants</a
+>
+<a href="#"><span class="nav-icon">{{ icon('bar-chart') }}</span> Analytics</a>
+<a href="#"><span class="nav-icon">{{ icon('mail') }}</span> Messages</a>
+<a href="{{ url_for('company_profile') }}"
+  ><span class="nav-icon">{{ icon('building') }}</span> Company Profile</a
+>
+<a href="{{ url_for('settings') }}" class="active"
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
+>
 {% else %}
-<a href="{{ url_for('candidate_dashboard') }}"><span class="nav-icon">&#8962;</span> Home</a>
-<a href="{{ url_for('candidate_jobs') }}"><span class="nav-icon">&#128203;</span> Jobs Feed</a>
-<a href="{{ url_for('saved_jobs_page') }}"><span class="nav-icon">&#9734;</span> Saved Jobs</a>
-<a href="{{ url_for('candidate_applications') }}"><span class="nav-icon">&#128196;</span> My Applications</a>
-<a href="{{ url_for('resume_score') }}"><span class="nav-icon">&#128202;</span> Resume Score</a>
-<a href="#"><span class="nav-icon">&#9993;</span> Messages</a>
-<a href="{{ url_for('candidate_profile') }}"><span class="nav-icon">&#128100;</span> Profile</a>
-<a href="{{ url_for('settings') }}" class="active"><span class="nav-icon">&#9881;</span> Settings</a>
-{% endif %}
-{% endblock %}
-
-{% block dashboard_content %}
+<a href="{{ url_for('candidate_dashboard') }}"
+  ><span class="nav-icon">{{ icon('home') }}</span> Home</a
+>
+<a href="{{ url_for('candidate_jobs') }}"
+  ><span class="nav-icon">{{ icon('list') }}</span> Jobs Feed</a
+>
+<a href="{{ url_for('saved_jobs_page') }}"
+  ><span class="nav-icon">{{ icon('star') }}</span> Saved Jobs</a
+>
+<a href="{{ url_for('candidate_applications') }}"
+  ><span class="nav-icon">{{ icon('file') }}</span> My Applications</a
+>
+<a href="{{ url_for('resume_score') }}"
+  ><span class="nav-icon">{{ icon('bar-chart') }}</span> Resume Score</a
+>
+<a href="#"><span class="nav-icon">{{ icon('mail') }}</span> Messages</a>
+<a href="{{ url_for('candidate_profile') }}"
+  ><span class="nav-icon">{{ icon('user') }}</span> Profile</a
+>
+<a href="{{ url_for('settings') }}" class="active"
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
+>
+{% endif %} {% endblock %} {% block dashboard_content %}
 <div class="settings-card">
-    <h3>Account settings</h3>
-    <p class="settings-subtitle">Manage your account details.</p>
+  <h3>Account settings</h3>
+  <p class="settings-subtitle">Manage your account details.</p>
 
-    <form method="POST" action="{{ url_for('settings') }}">
-        <div class="form-group">
-            <label for="full_name">Full name</label>
-            <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="text" class="form-control" value="{{ user.email }}" disabled>
-        </div>
-        <div class="form-group">
-            <label>Account type</label>
-            <input type="text" class="form-control" value="{{ user.role|capitalize }}" disabled>
-        </div>
-        <button type="submit" class="btn btn-primary">Save changes</button>
-    </form>
+  <form method="POST" action="{{ url_for('settings') }}">
+    <div class="form-group">
+      <label for="full_name">Full name</label>
+      <input
+        type="text"
+        id="full_name"
+        name="full_name"
+        class="form-control"
+        value="{{ user.full_name }}"
+      />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input
+        type="text"
+        class="form-control"
+        value="{{ user.email }}"
+        disabled
+      />
+    </div>
+    <div class="form-group">
+      <label>Account type</label>
+      <input
+        type="text"
+        class="form-control"
+        value="{{ user.role|capitalize }}"
+        disabled
+      />
+    </div>
+    <button type="submit" class="btn btn-primary">Save changes</button>
+  </form>
 </div>
 {% endblock %}
