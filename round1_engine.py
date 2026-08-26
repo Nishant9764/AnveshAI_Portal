@@ -30,9 +30,12 @@ import gemini_client
 import question_bank
 
 PART_A_PASS_PCT = 70        # clearly good -> go straight to Part B
-PART_A_REJECT_PCT = 40      # clearly bad -> reject, no extension needed
+PART_A_REJECT_PCT = 30      # clearly bad -> reject, no extension needed (lowered from 40:
+                             # this fires BEFORE sub-rounds 2/3 get a chance to run, so it
+                             # should only catch genuinely fabricated-looking resumes, not
+                             # borderline candidates who might redeem themselves later)
 BONUS_QUESTIONS = 5         # borderline -> test this many more before deciding
-BORDERLINE_REJECT_PCT = 50  # after extension, this is the final bar
+BORDERLINE_REJECT_PCT = 40  # after extension, this is the final bar
 
 PART_B_QUESTION_COUNT = 3
 
@@ -45,17 +48,27 @@ def score_part_a(is_correct_list):
     return round((correct / len(is_correct_list)) * 100, 1)
 
 
-def part_a_gate(pct, already_extended):
+def part_a_gate(pct, already_extended, reject_below=PART_A_REJECT_PCT,
+                 pass_above=PART_A_PASS_PCT, borderline_bar=BORDERLINE_REJECT_PCT):
     """
     Returns one of: "advance" (go to Part B), "reject" (auto-reject,
     graceful exit), "extend" (ask BONUS_QUESTIONS more, only once).
+
+    reject_below/pass_above/borderline_bar default to the module
+    constants but can be overridden per-job (see jobs.min_mcq_score) —
+    this is the "safety net, is this resume even remotely honest about
+    its claimed skills" gate, distinct from the overall Round 1 passing
+    score below. Employers can set it conservatively (e.g. lower) if
+    they don't want a weak MCQ showing alone to end the test before
+    sub-rounds 2/3 (which is where a lot of real signal lives) even get
+    a chance to run.
     """
-    if pct >= PART_A_PASS_PCT:
+    if pct >= pass_above:
         return "advance"
-    if pct < PART_A_REJECT_PCT:
+    if pct < reject_below:
         return "reject"
     if already_extended:
-        return "advance" if pct >= BORDERLINE_REJECT_PCT else "reject"
+        return "advance" if pct >= borderline_bar else "reject"
     return "extend"
 
 
@@ -173,7 +186,7 @@ def compute_round1_result(mcq_pct, part_b_pct):
     return {"round1_score": overall, "verdict": verdict}
 
 
-def compute_final_round1_score(mcq_pct, subround2_pct, subround3_pct):
+def compute_final_round1_score(mcq_pct, subround2_pct, subround3_pct, pass_threshold=60):
     """
     The real, current Round 1 blend across all three sub-rounds:
       Sub-round 1 — Skills MCQ (DB-backed, honeypot-calibrated)
@@ -184,6 +197,12 @@ def compute_final_round1_score(mcq_pct, subround2_pct, subround3_pct):
     candidate's skills (an unseeded/thin bank) — in that case we don't
     penalize the candidate for a gap in the employer's data; we just
     reweight across the two sub-rounds that did run.
+
+    pass_threshold: the employer-configured Round 1 passing score
+    (jobs.min_round1_score) — this was hardcoded at 60 before, which
+    meant an employer had no way to say "I want a higher/lower bar for
+    this specific role." Now it's per-job, same pattern as min_match_score
+    for the ATS baseline.
     """
     subround2_pct = subround2_pct if subround2_pct is not None else 0.0
     subround3_pct = subround3_pct if subround3_pct is not None else 0.0
@@ -193,5 +212,5 @@ def compute_final_round1_score(mcq_pct, subround2_pct, subround3_pct):
     else:
         overall = round(mcq_pct * 0.4 + subround2_pct * 0.3 + subround3_pct * 0.3, 1)
 
-    verdict = "pass" if overall >= 60 else "reject"
+    verdict = "pass" if overall >= pass_threshold else "reject"
     return {"round1_score": overall, "verdict": verdict}

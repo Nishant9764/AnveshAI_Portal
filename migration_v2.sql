@@ -257,3 +257,14 @@ UPDATE questions SET question_type = 'mcq' WHERE question_type IN ('multiple_cho
 UPDATE questions SET difficulty = 'medium' WHERE difficulty IN ('intermediate', 'moderate');
 UPDATE questions SET difficulty = 'easy' WHERE difficulty IN ('beginner', 'basic');
 UPDATE questions SET difficulty = 'hard' WHERE difficulty IN ('advanced', 'expert');
+
+-- ------------------------------------------------------------
+-- CONFIGURABLE ROUND 1 THRESHOLDS — these were hardcoded in Python
+-- (60% overall pass, 40% MCQ safety-net reject) with no way for an
+-- employer to adjust them per job. A candidate scoring well overall
+-- could still get cut early by the fixed MCQ threshold before
+-- sub-rounds 2/3 even ran. Now both live on the job posting, same
+-- pattern as min_match_score for the ATS baseline.
+-- ------------------------------------------------------------
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS min_round1_score INT DEFAULT 60;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS min_mcq_score INT DEFAULT 30;
