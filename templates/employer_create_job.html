@@ -154,6 +154,52 @@ Job{% endblock %} {% block sidebar_nav %}
       </div>
     </div>
 
+    <div class="form-row">
+      <div class="form-group">
+        <label for="min_round1_score">Minimum Round 1 score to pass (%)</label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          id="min_round1_score"
+          name="min_round1_score"
+          class="form-control"
+          value="60"
+          placeholder="e.g. 60"
+        />
+        <p class="hint" style="font-size: 11.5px; color: #999; margin-top: 4px">
+          The overall passing bar for the full Round 1 assessment (Skills MCQ +
+          Experience &amp; Projects + Role Fit, blended). Below this, the
+          candidate is flagged as "reject" on your dashboard — you always make
+          the final call.
+        </p>
+      </div>
+      <div class="form-group">
+        <label for="min_mcq_score"
+          >Minimum Skills MCQ score to continue (%)</label
+        >
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          id="min_mcq_score"
+          name="min_mcq_score"
+          class="form-control"
+          value="30"
+          placeholder="e.g. 30"
+        />
+        <p class="hint" style="font-size: 11.5px; color: #999; margin-top: 4px">
+          A safety net, separate from the passing score above: if a candidate's
+          Skills MCQ score is below this, the test ends there rather than
+          continuing to the remaining sections. Keep this low/lenient if you
+          want most candidates to reach the full assessment regardless of an
+          early rough section.
+        </p>
+      </div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Post Job</button>
   </form>
 </div>
