@@ -685,6 +685,51 @@ def register_routes(app):
         )
         return render_template("candidate_applications.html", apps=apps)
 
+    @app.route("/candidate/notifications")
+    @login_required(role="candidate")
+    def candidate_notifications():
+        """Mirrors the employer's activity feed: applied, invited to
+        Round 1, Round 1 completed, and current pipeline status — built
+        from timestamps already on the application rather than a
+        separate history table, so it reflects real events without new
+        schema for this pass."""
+        user_id = session["user_id"]
+        apps = db.query_all(
+            """SELECT a.id, a.applied_at, a.invite_sent_at, a.round1_completed_at,
+                      a.round1_verdict, a.status, a.match_score, j.title AS job_title
+               FROM applications a JOIN jobs j ON j.id = a.job_id
+               WHERE a.candidate_id = %s""",
+            (user_id,),
+        )
+        events = []
+        for a in apps:
+            events.append({
+                "type": "applied", "at": a["applied_at"], "app_id": a["id"],
+                "text": f"You applied for {a['job_title']}",
+                "meta": f"{a['match_score']}% match" if a["match_score"] is not None else None,
+            })
+            if a["invite_sent_at"]:
+                events.append({
+                    "type": "invited", "at": a["invite_sent_at"], "app_id": a["id"],
+                    "text": f"Round 1 assessment invite sent for {a['job_title']}",
+                    "meta": None,
+                })
+            if a["round1_completed_at"]:
+                events.append({
+                    "type": "round1_pass" if a["round1_verdict"] == "pass" else "round1_done",
+                    "at": a["round1_completed_at"], "app_id": a["id"],
+                    "text": f"You completed Round 1 for {a['job_title']}",
+                    "meta": None,
+                })
+            if a["status"] in ("Shortlisted", "Interview", "Offered"):
+                events.append({
+                    "type": "status", "at": a["round1_completed_at"] or a["applied_at"], "app_id": a["id"],
+                    "text": f"Your application for {a['job_title']} is now: {a['status']}",
+                    "meta": None,
+                })
+        events.sort(key=lambda e: e["at"] or datetime.min, reverse=True)
+        return render_template("candidate_notifications.html", events=events[:25])
+
     @app.route("/candidate/applications/<int:app_id>")
     @login_required(role="candidate")
     def candidate_application_detail(app_id):
@@ -1093,6 +1138,8 @@ def register_routes(app):
             salary_min = request.form.get("salary_min") or None
             salary_max = request.form.get("salary_max") or None
             min_match_score = request.form.get("min_match_score") or 60
+            min_round1_score = request.form.get("min_round1_score") or 60
+            min_mcq_score = request.form.get("min_mcq_score") or 30
             test_trigger_mode = request.form.get("test_trigger_mode", "manual")
             if test_trigger_mode not in ("immediate", "12h", "24h", "manual"):
                 test_trigger_mode = "manual"
@@ -1110,11 +1157,12 @@ def register_routes(app):
                 """INSERT INTO jobs
                    (employer_id, title, company_name, location, job_type, tech_stack,
                     salary_min_lpa, salary_max_lpa, description, min_match_score, test_trigger_mode,
-                    jd_required_skills, jd_preferred_skills)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    jd_required_skills, jd_preferred_skills, min_round1_score, min_mcq_score)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                 (employer_id, title, company_name, location, job_type, tech_stack,
                  salary_min, salary_max, description, min_match_score, test_trigger_mode,
-                 json.dumps(jd_required_skills), json.dumps(jd_preferred_skills)),
+                 json.dumps(jd_required_skills), json.dumps(jd_preferred_skills),
+                 min_round1_score, min_mcq_score),
             )
             flash("Job posted successfully!", "success")
             return redirect(url_for("manage_jobs"))
@@ -1179,6 +1227,7 @@ def register_routes(app):
         a = db.query_one(
             """SELECT a.*, u.full_name, u.email, u.avatar_initials,
                       j.title AS job_title, j.min_match_score, j.test_trigger_mode, j.id AS job_id,
+                      j.min_round1_score, j.min_mcq_score,
                       s.integrity_score AS session_integrity_score, s.warnings_count,
                       s.mcq_pct, s.mcq_total, s.mcq_correct,
                       r.id AS resume_id_ref, r.filename AS resume_filename,
@@ -1242,6 +1291,14 @@ def register_routes(app):
                         db.execute(
                             "UPDATE applications SET rejection_emailed_at=NOW() WHERE id=%s", (app_id,)
                         )
+            elif new_status in ("Shortlisted", "Interview", "Offered"):
+                # Every real forward-progress status change notifies the
+                # candidate automatically — they shouldn't have to keep
+                # refreshing "My Applications" to find out.
+                mailer.send_status_update_email(
+                    row["email"], row["full_name"], row["title"], row["company_name"],
+                    new_status, application_id=app_id,
+                )
             flash("Applicant status updated.", "success")
         return redirect(url_for("employer_applicants"))
 
@@ -1267,7 +1324,7 @@ def register_routes(app):
         employer_id = session["user_id"]
         a = db.query_one(
             """SELECT a.id, a.round1_session_id, a.round1_score, a.round1_verdict,
-                      a.mcq_pct AS app_mcq_pct, u.full_name, j.title AS job_title
+                      u.full_name, j.title AS job_title
                FROM applications a
                JOIN jobs j ON j.id = a.job_id
                JOIN users u ON u.id = a.candidate_id
@@ -1548,10 +1605,14 @@ def register_routes(app):
         if not test_session:
             abort(404)
 
+        job_row = db.query_one("SELECT min_mcq_score FROM jobs WHERE id=%s", (test_session["job_id"],))
+        min_mcq_score = (job_row["min_mcq_score"] if job_row and job_row.get("min_mcq_score") is not None
+                          else round1_engine.PART_A_REJECT_PCT)
+
         responses = models.get_responses(session_id, round_name="round1_mcq")
         pct = round1_engine.score_part_a([r["is_correct"] for r in responses])
         state = models.get_test_state(session_id)
-        decision = round1_engine.part_a_gate(pct, state["mcq_extended"])
+        decision = round1_engine.part_a_gate(pct, state["mcq_extended"], reject_below=min_mcq_score)
 
         models.update_session(session_id, mcq_total=len(responses),
                                mcq_correct=sum(1 for r in responses if r["is_correct"]), mcq_pct=pct)
@@ -1726,12 +1787,16 @@ def register_routes(app):
         if not test_session:
             abort(404)
 
+        job_row = db.query_one("SELECT min_round1_score FROM jobs WHERE id=%s", (test_session["job_id"],))
+        pass_threshold = (job_row["min_round1_score"] if job_row and job_row.get("min_round1_score") is not None
+                           else 60)
+
         responses = models.get_responses(session_id, round_name="round3")
         round3_pct = round3_engine.score_round3([r["score"] for r in responses]) if responses else 0.0
         mcq_pct = test_session.get("mcq_pct")  # may be None — skipped sub-round 1
         round2_pct = test_session.get("round2_score") or 0.0
 
-        result = round1_engine.compute_final_round1_score(mcq_pct, round2_pct, round3_pct)
+        result = round1_engine.compute_final_round1_score(mcq_pct, round2_pct, round3_pct, pass_threshold=pass_threshold)
 
         integ = db.query_one("SELECT integrity_score FROM sessions WHERE id=%s", (session_id,))
         models.update_session(session_id, round3_score=round3_pct, status="completed",
