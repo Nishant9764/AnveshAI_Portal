@@ -101,3 +101,41 @@ def send_test_invite_email(candidate_email, candidate_name, job_title, company_n
     <p>— The {company_name} Hiring Team</p>
     """
     return _send(candidate_email, subject, body, application_id, "test_invite")
+
+
+STATUS_MESSAGES = {
+    "Shortlisted": (
+        "You've been shortlisted",
+        "Good news — you've been shortlisted for this role. The hiring team will "
+        "reach out with next steps.",
+    ),
+    "Interview": (
+        "You've moved to interview stage",
+        "Your application has moved forward to the interview stage. The hiring "
+        "team will be in touch to schedule a time.",
+    ),
+    "Offered": (
+        "An offer has been made",
+        "Congratulations — the hiring team has extended an offer for this role. "
+        "Check your inbox for details, or expect a follow-up shortly.",
+    ),
+}
+
+
+def send_status_update_email(candidate_email, candidate_name, job_title, company_name, new_status, application_id=None):
+    """Fires for every status change the employer makes EXCEPT Rejected
+    (which has its own, more carefully-worded template above) — so a
+    candidate always hears about real progress on their application
+    without the employer needing to do anything beyond updating the
+    status dropdown."""
+    if new_status not in STATUS_MESSAGES:
+        return False
+    headline, body_text = STATUS_MESSAGES[new_status]
+    subject = f"{headline} — {job_title} at {company_name}"
+    body = f"""
+    <p>Hi {candidate_name.split()[0] if candidate_name else 'there'},</p>
+    <p>{body_text}</p>
+    <p><strong>Role:</strong> {job_title}<br><strong>Company:</strong> {company_name}</p>
+    <p>— The {company_name} Hiring Team</p>
+    """
+    return _send(candidate_email, subject, body, application_id, f"status_{new_status.lower()}")
