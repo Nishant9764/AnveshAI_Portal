@@ -1,0 +1,106 @@
+{% extends "dashboard_base.html" %} {% from "_icons.html" import icon %} {%
+block title %}Notifications - Anvesh AI{% endblock %} {% block page_title
+%}Notifications{% endblock %} {% block sidebar_nav %}
+<a href="{{ url_for('candidate_dashboard') }}"
+  ><span class="nav-icon">{{ icon('home') }}</span> Home</a
+>
+<a href="{{ url_for('candidate_jobs') }}"
+  ><span class="nav-icon">{{ icon('list') }}</span> Jobs Feed</a
+>
+<a href="{{ url_for('saved_jobs_page') }}"
+  ><span class="nav-icon">{{ icon('star') }}</span> Saved Jobs</a
+>
+<a href="{{ url_for('candidate_applications') }}"
+  ><span class="nav-icon">{{ icon('file') }}</span> My Applications</a
+>
+<a href="{{ url_for('resume_score') }}"
+  ><span class="nav-icon">{{ icon('bar-chart') }}</span> Resume Score</a
+>
+<a href="{{ url_for('candidate_notifications') }}" class="active"
+  ><span class="nav-icon">{{ icon('bell') }}</span> Notifications</a
+>
+<a href="{{ url_for('candidate_profile') }}"
+  ><span class="nav-icon">{{ icon('user') }}</span> Profile</a
+>
+<a href="{{ url_for('settings') }}"
+  ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
+>
+{% endblock %} {% block dashboard_content %}
+<div class="card">
+  <div class="card-header"><h3>Recent activity</h3></div>
+  {% if events %}
+  <div style="display: flex; flex-direction: column; margin-top: 10px">
+    {% for e in events %}
+    <a
+      href="{{ url_for('candidate_application_detail', app_id=e.app_id) }}"
+      class="notif-row"
+    >
+      <span class="notif-icon {{ e.type }}">
+        {% if e.type == 'applied' %}{{ icon('file', 16) }} {% elif e.type ==
+        'invited' %}{{ icon('mail', 16) }} {% elif e.type == 'round1_pass' %}{{
+        icon('check', 16) }} {% elif e.type == 'status' %}{{ icon('trending-up',
+        16) }} {% else %}{{ icon('check', 16) }}{% endif %}
+      </span>
+      <div style="flex: 1">
+        <div style="font-size: 13.5px; color: #171a2b">{{ e.text }}</div>
+        <div style="font-size: 11.5px; color: #999">
+          {{ e.at|time_ago if e.at else '' }}{% if e.meta %} &middot; {{ e.meta
+          }}{% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h4>Nothing yet</h4>
+    <p>Updates on your applications will show up here.</p>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .notif-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 8px;
+    border-bottom: 1px solid #f3f3f6;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s;
+  }
+  .notif-row:hover {
+    background: #fafafc;
+  }
+  .notif-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .notif-icon.applied {
+    background: #eef0ff;
+    color: #4338ca;
+  }
+  .notif-icon.invited {
+    background: #fff7e6;
+    color: #b45309;
+  }
+  .notif-icon.round1_pass {
+    background: #ecfdf5;
+    color: #16a34a;
+  }
+  .notif-icon.round1_done {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+  .notif-icon.status {
+    background: #ecfdf5;
+    color: #16a34a;
+  }
+</style>
+{% endblock %}
