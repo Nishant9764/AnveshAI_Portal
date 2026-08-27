@@ -1,93 +1,268 @@
 {% extends "base.html" %} {% block title %}Sign Up - Anvesh AI{% endblock %} {%
 block content %}
+
 <div class="auth-page">
   <div class="auth-card">
-    <a href="{{ url_for('index') }}" class="logo" style="display: flex">
-      <span class="logo-mark">A</span>
-      <span>Anvesh AI</span>
-    </a>
-    <h1>Create your account</h1>
-    <p class="auth-subtitle">Join 50,000+ professionals and 2,000+ companies</p>
+    <!-- Brand Logo -->
+    <div
+      style="
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        margin: 0 auto 28px;
+        padding: 0;
+      "
+    >
+      <a
+        href="{{ url_for('index') }}"
+        class="logo"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          text-decoration: none;
+        "
+      >
+        <img
+          src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
+          alt="Anvesh AI"
+          class="logo-mark"
+          style="
+            display: block !important;
+            width: 72px !important;
+            height: 72px !important;
+            max-width: 72px !important;
+            object-fit: contain !important;
+            object-position: center !important;
 
-    <div class="role-toggle">
-      <a
-        href="{{ url_for('signup', role='candidate') }}"
-        class="{{ 'active' if role == 'candidate' else '' }}"
-      >
-        &#128100; Candidate
-      </a>
-      <a
-        href="{{ url_for('signup', role='employer') }}"
-        class="{{ 'active' if role == 'employer' else '' }}"
-      >
-        &#127970; Employer
+            margin: 0 auto !important;
+            padding: 0 !important;
+
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+          "
+        />
       </a>
     </div>
 
+    <!-- Heading -->
+    <h1 style="text-align: center; margin-bottom: 10px; letter-spacing: -0.8px">
+      Create your account
+    </h1>
+
+    <p
+      class="auth-subtitle"
+      style="text-align: center; line-height: 1.6; margin-bottom: 28px"
+    >
+      Join 50,000+ professionals and 2,000+ companies
+    </p>
+
+    <!-- Role Selection -->
+    <div class="role-toggle" style="margin-bottom: 28px">
+      <a
+        href="{{ url_for('signup', role='candidate') }}"
+        class="{{ 'active' if role == 'candidate' else '' }}"
+        aria-label="Create Candidate account"
+      >
+        <span style="font-size: 16px; margin-right: 6px">&#128100;</span>
+        Candidate
+      </a>
+
+      <a
+        href="{{ url_for('signup', role='employer') }}"
+        class="{{ 'active' if role == 'employer' else '' }}"
+        aria-label="Create Employer account"
+      >
+        <span style="font-size: 16px; margin-right: 6px">&#127970;</span>
+        Employer
+      </a>
+    </div>
+
+    <!-- Signup Form -->
     <form method="POST" action="{{ url_for('signup') }}">
+      <!-- Preserve role -->
       <input type="hidden" name="role" value="{{ role }}" />
+
+      <!-- Full Name / Company -->
       <div class="form-group">
-        <label for="full_name"
-          >{{ 'Full name' if role == 'candidate' else 'Company / Your name'
-          }}</label
+        <label
+          for="full_name"
+          style="font-weight: 600; margin-bottom: 8px; display: block"
         >
+          {{ 'Full name' if role == 'candidate' else 'Company / Your name' }}
+        </label>
+
         <input
           type="text"
           id="full_name"
           name="full_name"
           class="form-control"
           placeholder="{{ 'Jane Doe' if role == 'candidate' else 'Acme Corp / Jane Doe' }}"
+          autocomplete="name"
           required
         />
       </div>
+
+      <!-- Email -->
       <div class="form-group">
-        <label for="email">Email address</label>
+        <label
+          for="email"
+          style="font-weight: 600; margin-bottom: 8px; display: block"
+        >
+          Email address
+        </label>
+
         <input
           type="email"
           id="email"
           name="email"
           class="form-control"
           placeholder="you@example.com"
+          autocomplete="email"
           required
         />
       </div>
+
+      <!-- Password Row -->
       <div class="form-row">
         <div class="form-group">
-          <label for="password">Password</label>
+          <label
+            for="password"
+            style="font-weight: 600; margin-bottom: 8px; display: block"
+          >
+            Password
+          </label>
+
           <input
             type="password"
             id="password"
             name="password"
             class="form-control"
             placeholder="Create a password"
+            autocomplete="new-password"
             required
           />
         </div>
+
         <div class="form-group">
-          <label for="confirm_password">Confirm password</label>
+          <label
+            for="confirm_password"
+            style="font-weight: 600; margin-bottom: 8px; display: block"
+          >
+            Confirm password
+          </label>
+
           <input
             type="password"
             id="confirm_password"
             name="confirm_password"
             class="form-control"
             placeholder="Repeat password"
+            autocomplete="new-password"
             required
           />
         </div>
       </div>
+
+      <!-- Password Security Hint -->
+      <div
+        style="
+          display: flex;
+          align-items: flex-start;
+          gap: 9px;
+          padding: 12px 14px;
+          margin: 4px 0 18px;
+          border-radius: 10px;
+          background: rgba(79, 70, 229, 0.05);
+          border: 1px solid rgba(79, 70, 229, 0.1);
+        "
+      >
+        <span style="font-size: 15px; line-height: 1.4"> &#128274; </span>
+
+        <span style="font-size: 12px; line-height: 1.55; opacity: 0.78">
+          Use a strong password to help keep your account and recruitment
+          information secure.
+        </span>
+      </div>
+
+      <!-- Signup Button -->
       <button
         type="submit"
         class="btn btn-primary btn-block"
-        style="margin-top: 6px"
+        style="
+          margin-top: 6px;
+          min-height: 50px;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: 0.1px;
+          transition: all 0.25s ease;
+        "
       >
         Sign up as {{ 'Candidate' if role == 'candidate' else 'Employer' }}
+
+        <span style="margin-left: 7px; font-size: 16px"> &rarr; </span>
       </button>
     </form>
 
+    <!-- Secure Access Divider -->
+    <div
+      style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 28px 0 22px;
+        color: #9ca3af;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+      "
+    >
+      <span
+        style="flex: 1; height: 1px; background: currentColor; opacity: 0.25"
+      ></span>
+
+      <span> SECURE REGISTRATION </span>
+
+      <span
+        style="flex: 1; height: 1px; background: currentColor; opacity: 0.25"
+      ></span>
+    </div>
+
+    <!-- Trust Message -->
+    <div
+      style="
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 13px 14px;
+        border-radius: 10px;
+        background: rgba(79, 70, 229, 0.05);
+        border: 1px solid rgba(79, 70, 229, 0.1);
+        margin-bottom: 24px;
+      "
+    >
+      <span style="font-size: 16px; line-height: 1.4"> &#10024; </span>
+
+      <span style="font-size: 12px; line-height: 1.55; opacity: 0.78">
+        Create your Anvesh AI account and take the next step toward smarter,
+        more connected recruitment.
+      </span>
+    </div>
+
+    <!-- Login -->
     <div class="auth-footer-link">
       Already have an account?
-      <a href="{{ url_for('login', role=role) }}">Log in</a>
+
+      <a href="{{ url_for('login', role=role) }}"> Log in </a>
     </div>
   </div>
 </div>
+
 {% endblock %}
