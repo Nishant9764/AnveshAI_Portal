@@ -2,14 +2,157 @@
 Perfect Candidate{% endblock %} {% block content %}
 
 <style>
-  /* Scoped to the home page hero only — doesn't touch other pages */
   @import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap");
 
+  /* ============================================================
+     Design tokens (scoped to this page)
+     ============================================================ */
+  .av-page {
+    --navy-950: #05060f;
+    --navy-900: #0b0e24;
+    --navy-800: #12152f;
+    --indigo: #4f46e5;
+    --violet: #7c3aed;
+    --ink: #111827;
+    --muted: #6b7280;
+    --line: #e7e8f2;
+    --surface: #ffffff;
+    --surface-alt: #f7f8fd;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+  .av-page h1,
+  .av-page h2,
+  .av-page h3,
+  .av-page h4 {
+    font-family: "Sora", sans-serif;
+  }
+
+  /* ============================================================
+     Navbar
+     ============================================================ */
+  .av-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 5vw;
+    background: rgba(5, 6, 15, 0.88);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .av-nav__brand {
+    display: flex;
+    align-items: center;
+  }
+  .av-nav__brand img {
+    height: 38px;
+    width: auto;
+    display: block;
+  }
+  .av-nav__links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .av-nav__links a {
+    font-size: 14.5px;
+    font-weight: 500;
+    color: #cdd0ea;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .av-nav__links a:hover,
+  .av-nav__links a.active {
+    color: #ffffff;
+  }
+  .av-nav__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    color: #fff !important;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+    white-space: nowrap;
+  }
+  .av-nav__toggle {
+    display: none;
+  }
+  .av-nav__burger {
+    display: none;
+    width: 24px;
+    height: 18px;
+    position: relative;
+    cursor: pointer;
+  }
+  .av-nav__burger span {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: 0.25s ease;
+  }
+  .av-nav__burger span:nth-child(1) {
+    top: 0;
+  }
+  .av-nav__burger span:nth-child(2) {
+    top: 8px;
+  }
+  .av-nav__burger span:nth-child(3) {
+    top: 16px;
+  }
+
+  @media (max-width: 900px) {
+    .av-nav__links {
+      position: fixed;
+      top: 70px;
+      left: 0;
+      right: 0;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      background: var(--navy-950);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 10px 6vw 18px;
+      transform: translateY(-130%);
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .av-nav__links a {
+      width: 100%;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .av-nav__toggle:checked ~ .av-nav__links {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .av-nav__burger {
+      display: block;
+    }
+  }
+
+  /* ============================================================
+     Hero
+     ============================================================ */
   .hero--bg {
     position: relative;
     display: flex;
     align-items: center;
-    min-height: 94vh;
+    min-height: 92vh;
     overflow: hidden;
     background-image: linear-gradient(
         100deg,
@@ -23,7 +166,6 @@ Perfect Candidate{% endblock %} {% block content %}
     background-position: center 18%;
     background-repeat: no-repeat;
   }
-
   .hero__decor {
     position: absolute;
     z-index: 1;
@@ -55,15 +197,13 @@ Perfect Candidate{% endblock %} {% block content %}
       display: none;
     }
   }
-
   .hero__content {
     position: relative;
     z-index: 2;
     max-width: 620px;
     width: 100%;
-    padding: 130px 6vw 100px;
+    padding: 90px 6vw 100px;
   }
-
   .hero__badge {
     display: inline-flex;
     align-items: center;
@@ -77,9 +217,7 @@ Perfect Candidate{% endblock %} {% block content %}
     font-weight: 600;
     margin-bottom: 24px;
   }
-
   .hero__title {
-    font-family: "Sora", sans-serif;
     font-weight: 700;
     font-size: clamp(2.3rem, 3.4vw + 1rem, 3.6rem);
     line-height: 1.12;
@@ -93,7 +231,6 @@ Perfect Candidate{% endblock %} {% block content %}
     background-clip: text;
     color: transparent;
   }
-
   .hero__subtitle {
     font-size: 16.5px;
     line-height: 1.7;
@@ -101,7 +238,6 @@ Perfect Candidate{% endblock %} {% block content %}
     max-width: 46ch;
     margin: 0 0 34px;
   }
-
   .hero__ctas {
     display: flex;
     flex-wrap: wrap;
@@ -121,7 +257,7 @@ Perfect Candidate{% endblock %} {% block content %}
     transform: translateY(-2px);
   }
   .hero__cta--primary {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
     box-shadow: 0 14px 30px rgba(79, 70, 229, 0.4);
   }
   .hero__cta--secondary {
@@ -152,7 +288,6 @@ Perfect Candidate{% endblock %} {% block content %}
     color: rgba(255, 255, 255, 0.75);
     margin-top: 2px;
   }
-
   .hero__proof {
     display: flex;
     align-items: center;
@@ -181,238 +316,959 @@ Perfect Candidate{% endblock %} {% block content %}
   .hero__proof strong {
     color: #ffffff;
   }
-
   @media (max-width: 640px) {
     .hero--bg {
       min-height: auto;
       background-position: center 10%;
     }
     .hero__content {
-      padding: 100px 6vw 70px;
+      padding: 40px 6vw 70px;
     }
     .hero__ctas {
       flex-direction: column;
       align-items: stretch;
     }
   }
+
+  /* ============================================================
+     Shared section scaffolding
+     ============================================================ */
+  .av-section {
+    padding: 96px 6vw;
+  }
+  .av-section--alt {
+    background: var(--surface-alt);
+  }
+  .av-eyebrow {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 1.4px;
+    color: var(--indigo);
+    margin-bottom: 14px;
+  }
+  .av-heading {
+    font-size: clamp(1.7rem, 1.6vw + 1.2rem, 2.4rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    margin: 0 0 16px;
+    line-height: 1.25;
+  }
+  .av-section-head {
+    max-width: 640px;
+    margin: 0 auto 56px;
+    text-align: center;
+  }
+  .av-section-head p {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 0;
+  }
+
+  /* ============================================================
+     Trusted by
+     ============================================================ */
+  .av-trusted {
+    padding: 44px 6vw;
+    background: var(--navy-900);
+    text-align: center;
+  }
+  .av-trusted .av-eyebrow {
+    color: #9498c2;
+    letter-spacing: 2px;
+  }
+  .av-trusted .logo-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 44px;
+    margin-top: 22px;
+    opacity: 0.85;
+  }
+
+  /* ============================================================
+     About
+     ============================================================ */
+  .av-about {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 64px;
+    align-items: center;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .av-about__copy p {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.8;
+    margin: 0 0 18px;
+  }
+  .av-about__stats {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 36px;
+    border-radius: 24px;
+    background: linear-gradient(160deg, var(--navy-900), #191d45);
+    overflow: hidden;
+  }
+  .av-about__stats::before {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.35);
+    filter: blur(60px);
+    top: -60px;
+    right: -60px;
+  }
+  .av-about__stat {
+    position: relative;
+    z-index: 1;
+  }
+  .av-about__stat strong {
+    display: block;
+    font-family: "Sora", sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .av-about__stat span {
+    display: block;
+    font-size: 13px;
+    color: #b7bbe0;
+    margin-top: 4px;
+  }
+  @media (max-width: 860px) {
+    .av-about {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ============================================================
+     Features (bento)
+     ============================================================ */
+  .av-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: minmax(180px, auto);
+    gap: 20px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .av-feature-card {
+    position: relative;
+    padding: 30px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid var(--line);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .av-feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(17, 24, 39, 0.08);
+  }
+  .av-feature-card--lead {
+    grid-column: span 2;
+    background: linear-gradient(160deg, var(--navy-900), #191d45);
+    color: #fff;
+    border: none;
+  }
+  .av-feature-card--lead p {
+    color: #c7cae8;
+  }
+  .av-feature-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 18px;
+    background: rgba(79, 70, 229, 0.1);
+  }
+  .av-feature-card--lead .av-feature-card__icon {
+    background: rgba(255, 255, 255, 0.12);
+  }
+  .av-feature-card h3 {
+    font-size: 18px;
+    margin: 0 0 8px;
+    color: inherit;
+  }
+  .av-feature-card p {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: var(--muted);
+    margin: 0;
+  }
+  @media (max-width: 860px) {
+    .av-features {
+      grid-template-columns: 1fr;
+    }
+    .av-feature-card--lead {
+      grid-column: span 1;
+    }
+  }
+
+  /* ============================================================
+     How it works
+     ============================================================ */
+  .av-how {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  .av-how__track {
+    padding: 36px 32px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+  .av-how__track h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    margin: 0 0 26px;
+    color: var(--ink);
+  }
+  .av-how__track h3 span {
+    font-size: 20px;
+  }
+  .av-how__step {
+    display: flex;
+    gap: 16px;
+    padding-bottom: 26px;
+    margin-bottom: 26px;
+    border-bottom: 1px dashed var(--line);
+    position: relative;
+  }
+  .av-how__step:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+  .av-how__num {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+  }
+  .av-how__step h4 {
+    margin: 4px 0 6px;
+    font-size: 15.5px;
+    color: var(--ink);
+  }
+  .av-how__step p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+  @media (max-width: 860px) {
+    .av-how {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ============================================================
+     Pricing
+     ============================================================ */
+  .av-pricing-note {
+    text-align: center;
+    max-width: 560px;
+    margin: -30px auto 46px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .av-pricing-note strong {
+    color: var(--indigo);
+  }
+  .av-pricing {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+    align-items: stretch;
+  }
+  .av-plan {
+    display: flex;
+    flex-direction: column;
+    padding: 34px 28px;
+    border-radius: 22px;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+  .av-plan--featured {
+    background: linear-gradient(160deg, var(--navy-900), #191d45);
+    color: #fff;
+    border: none;
+    transform: translateY(-10px);
+    box-shadow: 0 26px 55px rgba(17, 24, 39, 0.22);
+  }
+  .av-plan--featured p,
+  .av-plan--featured li {
+    color: #c7cae8 !important;
+  }
+  .av-plan__badge {
+    align-self: flex-start;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 16px;
+  }
+  .av-plan h3 {
+    font-size: 19px;
+    margin: 0 0 6px;
+  }
+  .av-plan .av-plan__price {
+    font-family: "Sora", sans-serif;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 6px 0 4px;
+  }
+  .av-plan .av-plan__price span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .av-plan--featured .av-plan__price span {
+    color: #b7bbe0;
+  }
+  .av-plan > p.av-plan__desc {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin: 0 0 22px;
+  }
+  .av-plan ul {
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+  .av-plan li {
+    display: flex;
+    gap: 10px;
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.4;
+  }
+  .av-plan li::before {
+    content: "\2713";
+    color: #16a34a;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .av-plan .btn {
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+  .av-plan__cta--outline {
+    border: 1.5px solid var(--indigo);
+    color: var(--indigo);
+  }
+  .av-plan__cta--solid {
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    color: #fff !important;
+  }
+  @media (max-width: 900px) {
+    .av-pricing {
+      grid-template-columns: 1fr;
+    }
+    .av-plan--featured {
+      transform: none;
+    }
+  }
+
+  /* ============================================================
+     Contact
+     ============================================================ */
+  .av-contact {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+    align-items: center;
+  }
+  .av-contact__copy p {
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.75;
+    margin: 0 0 26px;
+  }
+  .av-contact__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .av-contact-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 16px;
+    background: var(--surface-alt);
+    border: 1px solid var(--line);
+  }
+  .av-contact-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(79, 70, 229, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+  .av-contact-card strong {
+    display: block;
+    font-size: 14.5px;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .av-contact-card span,
+  .av-contact-card a {
+    font-size: 13.5px;
+    color: var(--muted);
+    text-decoration: none;
+  }
+  .av-contact-panel {
+    padding: 44px;
+    border-radius: 24px;
+    background: linear-gradient(160deg, var(--navy-900), #191d45);
+    color: #fff;
+    text-align: center;
+  }
+  .av-contact-panel h3 {
+    font-size: 22px;
+    margin: 0 0 12px;
+  }
+  .av-contact-panel p {
+    color: #c7cae8;
+    font-size: 14.5px;
+    line-height: 1.7;
+    margin: 0 0 26px;
+  }
+  .av-contact-panel a.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 26px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--indigo), var(--violet));
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 14.5px;
+  }
+  @media (max-width: 860px) {
+    .av-contact {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
-<nav class="navbar">
-  <a href="{{ url_for('index') }}" class="logo">
-    <span class="logo-mark">A</span>
-    <span>Anvesh AI</span>
-  </a>
-  <div class="navbar-links">
-    <a href="{{ url_for('index') }}" class="active">Home</a>
-    <a href="#about">About</a>
-    <a href="#features">Features</a>
-    <a href="#how-it-works">How It Works</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#contact">Contact</a>
-  </div>
-  <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
-</nav>
+<div class="av-page">
+  <!-- ============================== NAVBAR ============================== -->
+  <nav class="av-nav">
+    <a href="{{ url_for('index') }}" class="av-nav__brand">
+      <img
+        src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
+        alt="Anvesh AI"
+      />
+    </a>
 
-<section class="hero hero--bg">
-  <span class="hero__decor hero__decor--people" aria-hidden="true"
-    >&#128101;</span
-  >
-  <span class="hero__decor hero__decor--briefcase" aria-hidden="true"
-    >&#128188;</span
-  >
+    <input type="checkbox" id="av-nav-toggle" class="av-nav__toggle" />
 
-  <div class="hero__content">
-    <span class="hero__badge">&#11088; AI-Powered Recruitment Platform</span>
+    <ul class="av-nav__links">
+      <li><a href="{{ url_for('index') }}" class="active">Home</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
 
-    <h1 class="hero__title">
-      Find the Perfect Job<br />
-      or <span class="hero__title-accent">Perfect Candidate</span>
-    </h1>
-
-    <p class="hero__subtitle">
-      Anvesh AI connects talented people with the right opportunities using the
-      power of Artificial Intelligence.
-    </p>
-
-    <div class="hero__ctas">
-      <a
-        href="{{ url_for('signup', role='candidate') }}"
-        class="hero__cta hero__cta--primary"
-      >
-        <span class="hero__cta-icon">&#128100;</span>
-        <span class="hero__cta-text">
-          <strong>I'm a Candidate</strong>
-          <small>Find your dream job &rarr;</small>
-        </span>
-      </a>
-      <a
-        href="{{ url_for('signup', role='employer') }}"
-        class="hero__cta hero__cta--secondary"
-      >
-        <span class="hero__cta-icon">&#127970;</span>
-        <span class="hero__cta-text">
-          <strong>I'm an Employer</strong>
-          <small>Hire the best talent &rarr;</small>
-        </span>
-      </a>
+    <div style="display: flex; align-items: center; gap: 18px">
+      <a href="{{ url_for('login') }}" class="av-nav__cta">Login &rarr;</a>
+      <label for="av-nav-toggle" class="av-nav__burger">
+        <span></span><span></span><span></span>
+      </label>
     </div>
+  </nav>
 
-    <div class="hero__proof">
-      <div class="hero__avatars">
-        <span style="background: #c7d2fe"></span>
-        <span style="background: #fbcfe8"></span>
-        <span style="background: #bbf7d0"></span>
-        <span style="background: #fde68a"></span>
+  <!-- ============================== HERO ============================== -->
+  <section class="hero hero--bg">
+    <span class="hero__decor hero__decor--people" aria-hidden="true"
+      >&#128101;</span
+    >
+    <span class="hero__decor hero__decor--briefcase" aria-hidden="true"
+      >&#128188;</span
+    >
+
+    <div class="hero__content">
+      <span class="hero__badge">&#11088; AI-Powered Recruitment Platform</span>
+
+      <h1 class="hero__title">
+        Find the Perfect Job<br />
+        or <span class="hero__title-accent">Perfect Candidate</span>
+      </h1>
+
+      <p class="hero__subtitle">
+        Anvesh AI connects talented people with the right opportunities using
+        the power of Artificial Intelligence.
+      </p>
+
+      <div class="hero__ctas">
+        <a
+          href="{{ url_for('signup', role='candidate') }}"
+          class="hero__cta hero__cta--primary"
+        >
+          <span class="hero__cta-icon">&#128100;</span>
+          <span class="hero__cta-text">
+            <strong>I'm a Candidate</strong>
+            <small>Find your dream job &rarr;</small>
+          </span>
+        </a>
+        <a
+          href="{{ url_for('signup', role='employer') }}"
+          class="hero__cta hero__cta--secondary"
+        >
+          <span class="hero__cta-icon">&#127970;</span>
+          <span class="hero__cta-text">
+            <strong>I'm an Employer</strong>
+            <small>Hire the best talent &rarr;</small>
+          </span>
+        </a>
       </div>
-      <p>
-        Join <strong>50,000+</strong> professionals<br />
-        and <strong>2,000+</strong> companies
-      </p>
-    </div>
-  </div>
-</section>
 
-<section class="trusted-by">
-  <div class="eyebrow">TRUSTED BY AMAZING COMPANIES</div>
-  <div class="logo-row">
-    <span style="font-weight: 700; font-size: 18px; color: #4285f4"
-      >Google</span
-    >
-    <span style="font-weight: 700; font-size: 18px; color: #00a4ef"
-      >Microsoft</span
-    >
-    <span style="font-weight: 700; font-size: 18px; font-family: Georgia, serif"
-      >amazon</span
-    >
-    <span style="font-weight: 700; font-size: 18px; color: #a100ff"
-      >accenture</span
-    >
-    <span style="font-weight: 700; font-size: 18px; color: #0066b3">TATA</span>
-    <span style="font-weight: 700; font-size: 18px; color: #007cc3"
-      >Infosys</span
-    >
-  </div>
-</section>
-
-<section class="section" id="features">
-  <div class="section-header">
-    <div class="eyebrow">FEATURES</div>
-    <h2>Everything you need to succeed</h2>
-  </div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon blue">&#128100;</div>
-      <h3>AI Matching</h3>
-      <p>
-        Our AI matches you with the perfect opportunities based on your skills
-        and experience.
-      </p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon green">&#128101;</div>
-      <h3>Smart Resume</h3>
-      <p>Get AI-powered insights and improve your resume effectively.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon pink">&#128196;</div>
-      <h3>Easy Apply</h3>
-      <p>Apply to jobs in one click with your saved profiles and documents.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon purple">&#128202;</div>
-      <h3>Advanced Analytics</h3>
-      <p>
-        Employers get advanced analytics to find the most suitable candidates.
-      </p>
-    </div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="cta-banner">
-    <div class="cta-banner-text">
-      <span class="cta-banner-icon">&#128640;</span>
-      <div>
-        <h3>Ready to take the next step in your career?</h3>
+      <div class="hero__proof">
+        <div class="hero__avatars">
+          <span style="background: #c7d2fe"></span>
+          <span style="background: #fbcfe8"></span>
+          <span style="background: #bbf7d0"></span>
+          <span style="background: #fde68a"></span>
+        </div>
         <p>
-          Join thousands of professionals finding their dream jobs or connect
-          your company with top talent.
+          Join <strong>50,000+</strong> professionals<br />
+          and <strong>2,000+</strong> companies
         </p>
       </div>
     </div>
-    <div class="cta-banner-actions">
-      <a href="{{ url_for('signup', role='candidate') }}" class="btn btn-white"
-        >Explore Jobs</a
-      >
-      <a
-        href="{{ url_for('signup', role='employer') }}"
-        class="btn btn-ghost-white"
-        >Post a Job</a
-      >
-    </div>
-  </div>
-</section>
+  </section>
 
-<footer class="site-footer">
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <div class="logo">
-        <span class="logo-mark">A</span>
-        <span>Anvesh AI</span>
+  <!-- ============================== TRUSTED BY ============================== -->
+  <section class="av-trusted">
+    <div class="av-eyebrow">TRUSTED BY AMAZING COMPANIES</div>
+    <div class="logo-row">
+      <span style="font-weight: 700; font-size: 18px; color: #93a2ff"
+        >Google</span
+      >
+      <span style="font-weight: 700; font-size: 18px; color: #93a2ff"
+        >Microsoft</span
+      >
+      <span
+        style="
+          font-weight: 700;
+          font-size: 18px;
+          font-family: Georgia, serif;
+          color: #cdd0ea;
+        "
+        >amazon</span
+      >
+      <span style="font-weight: 700; font-size: 18px; color: #93a2ff"
+        >accenture</span
+      >
+      <span style="font-weight: 700; font-size: 18px; color: #cdd0ea"
+        >TATA</span
+      >
+      <span style="font-weight: 700; font-size: 18px; color: #93a2ff"
+        >Infosys</span
+      >
+    </div>
+  </section>
+
+  <!-- ============================== ABOUT ============================== -->
+  <section class="av-section" id="about">
+    <div class="av-about">
+      <div class="av-about__copy">
+        <span class="av-eyebrow">ABOUT ANVESH AI</span>
+        <h2 class="av-heading">Built to make hiring feel human again</h2>
+        <p>
+          Recruitment has always relied on guesswork — keyword-matched resumes,
+          endless scrolling, and gut-feel decisions on both sides of the table.
+          Anvesh AI replaces that with real signal: skills, context and intent,
+          read by AI and put in front of the right person at the right time.
+        </p>
+        <p>
+          Whether you're searching for your next role or building your next
+          team, Anvesh AI narrows the search from thousands of options to the
+          handful that actually fit — so decisions get faster, and better.
+        </p>
       </div>
-      <p>AI Powered Recruitment Platform</p>
-    </div>
-    <div class="footer-col">
-      <h4>Platform</h4>
-      <ul>
-        <li><a href="{{ url_for('index') }}">Home</a></li>
-        <li><a href="#features">Features</a></li>
-        <li><a href="#pricing">Pricing</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>For Candidates</h4>
-      <ul>
-        <li><a href="#">Browse Jobs</a></li>
-        <li>
-          <a href="{{ url_for('signup', role='candidate') }}">Create Profile</a>
-        </li>
-        <li><a href="#">Resume Builder</a></li>
-        <li><a href="#">Career Tips</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>For Employers</h4>
-      <ul>
-        <li>
-          <a href="{{ url_for('signup', role='employer') }}">Post a Job</a>
-        </li>
-        <li><a href="#">Browse Candidates</a></li>
-        <li><a href="#pricing">Pricing</a></li>
-        <li><a href="#">Resources</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Company</h4>
-      <ul>
-        <li><a href="#about">About Us</a></li>
-        <li><a href="#contact">Contact Us</a></li>
-        <li><a href="#">Privacy Policy</a></li>
-        <li><a href="#">Terms of Service</a></li>
-      </ul>
-    </div>
-    <div class="footer-col">
-      <h4>Follow Us</h4>
-      <div class="social-icons">
-        <a href="#">in</a>
-        <a href="#">tw</a>
-        <a href="#">fb</a>
-        <a href="#">ig</a>
+      <div class="av-about__stats">
+        <div class="av-about__stat">
+          <strong>50,000+</strong>
+          <span>Active professionals</span>
+        </div>
+        <div class="av-about__stat">
+          <strong>2,000+</strong>
+          <span>Companies hiring</span>
+        </div>
+        <div class="av-about__stat">
+          <strong>95%</strong>
+          <span>Avg. match accuracy</span>
+        </div>
+        <div class="av-about__stat">
+          <strong>24 hrs</strong>
+          <span>Avg. first response</span>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="footer-bottom">&copy; 2026 Anvesh AI. All rights reserved.</div>
-</footer>
+  </section>
+
+  <!-- ============================== FEATURES ============================== -->
+  <section class="av-section av-section--alt" id="features">
+    <div class="av-section-head">
+      <span class="av-eyebrow">FEATURES</span>
+      <h2 class="av-heading">Everything you need to succeed</h2>
+      <p>
+        One platform, built for both sides of the hire — powered by AI that
+        actually understands skills, not just keywords.
+      </p>
+    </div>
+
+    <div class="av-features">
+      <div class="av-feature-card av-feature-card--lead">
+        <div class="av-feature-card__icon">&#128100;</div>
+        <h3>AI Matching</h3>
+        <p>
+          Our AI reads skills, experience and intent to match you with
+          opportunities — or candidates — that genuinely fit, ranked by a
+          transparent match score instead of a wall of keyword-filtered results.
+        </p>
+      </div>
+      <div class="av-feature-card">
+        <div class="av-feature-card__icon">&#128101;</div>
+        <h3>Smart Resume</h3>
+        <p>Get AI-powered insights and improve your resume effectively.</p>
+      </div>
+      <div class="av-feature-card">
+        <div class="av-feature-card__icon">&#128196;</div>
+        <h3>Easy Apply</h3>
+        <p>
+          Apply to jobs in one click with your saved profiles and documents.
+        </p>
+      </div>
+      <div class="av-feature-card">
+        <div class="av-feature-card__icon">&#128202;</div>
+        <h3>Advanced Analytics</h3>
+        <p>
+          Employers get advanced analytics to find the most suitable candidates.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== HOW IT WORKS ============================== -->
+  <section class="av-section" id="how-it-works">
+    <div class="av-section-head">
+      <span class="av-eyebrow">HOW IT WORKS</span>
+      <h2 class="av-heading">Three steps, either side of the table</h2>
+      <p>Whether you're applying or hiring, Anvesh AI keeps it simple.</p>
+    </div>
+
+    <div class="av-how">
+      <div class="av-how__track">
+        <h3><span>&#128100;</span> For Candidates</h3>
+
+        <div class="av-how__step">
+          <div class="av-how__num">1</div>
+          <div>
+            <h4>Create your profile</h4>
+            <p>Add your skills, experience and preferences in minutes.</p>
+          </div>
+        </div>
+        <div class="av-how__step">
+          <div class="av-how__num">2</div>
+          <div>
+            <h4>Get AI-matched</h4>
+            <p>
+              Our AI surfaces roles that genuinely fit your goals in real time.
+            </p>
+          </div>
+        </div>
+        <div class="av-how__step">
+          <div class="av-how__num">3</div>
+          <div>
+            <h4>Apply &amp; get hired</h4>
+            <p>One-click apply, and track every application in one place.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="av-how__track">
+        <h3><span>&#127970;</span> For Employers</h3>
+
+        <div class="av-how__step">
+          <div class="av-how__num">1</div>
+          <div>
+            <h4>Post a role</h4>
+            <p>Share the position and the skills you're looking for.</p>
+          </div>
+        </div>
+        <div class="av-how__step">
+          <div class="av-how__num">2</div>
+          <div>
+            <h4>Review AI-ranked candidates</h4>
+            <p>See match scores and skill breakdowns instantly, not resumes.</p>
+          </div>
+        </div>
+        <div class="av-how__step">
+          <div class="av-how__num">3</div>
+          <div>
+            <h4>Hire with confidence</h4>
+            <p>Connect, interview and close top talent faster than ever.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PRICING ============================== -->
+  <section class="av-section av-section--alt" id="pricing">
+    <div class="av-section-head">
+      <span class="av-eyebrow">PRICING</span>
+      <h2 class="av-heading">Simple pricing for employers</h2>
+      <p>Pick the plan that matches how often you're hiring.</p>
+    </div>
+    <p class="av-pricing-note">
+      <strong>Candidates always use Anvesh AI for free.</strong> The plans below
+      are for companies posting roles and hiring talent.
+    </p>
+
+    <div class="av-pricing">
+      <div class="av-plan">
+        <h3>Starter</h3>
+        <div class="av-plan__price">$0<span> / month</span></div>
+        <p class="av-plan__desc">For occasional hiring, one role at a time.</p>
+        <ul>
+          <li>1 active job post</li>
+          <li>Basic AI candidate matching</li>
+          <li>Standard email support</li>
+        </ul>
+        <a
+          href="{{ url_for('signup', role='employer') }}"
+          class="btn av-plan__cta--outline"
+          >Get started</a
+        >
+      </div>
+
+      <div class="av-plan av-plan--featured">
+        <span class="av-plan__badge">MOST POPULAR</span>
+        <h3>Growth</h3>
+        <div class="av-plan__price">$99<span> / month</span></div>
+        <p class="av-plan__desc">For teams hiring regularly.</p>
+        <ul>
+          <li>10 active job posts</li>
+          <li>AI match scoring &amp; analytics</li>
+          <li>3 team seats</li>
+          <li>Priority support</li>
+        </ul>
+        <a
+          href="{{ url_for('signup', role='employer') }}"
+          class="btn av-plan__cta--solid"
+          >Start free trial</a
+        >
+      </div>
+
+      <div class="av-plan">
+        <h3>Enterprise</h3>
+        <div class="av-plan__price" style="font-size: 26px">Custom</div>
+        <p class="av-plan__desc">For high-volume hiring at scale.</p>
+        <ul>
+          <li>Unlimited job posts</li>
+          <li>Dedicated account manager</li>
+          <li>Custom integrations &amp; SSO</li>
+          <li>SLA-backed support</li>
+        </ul>
+        <a href="#contact" class="btn av-plan__cta--outline">Contact sales</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA BANNER ============================== -->
+  <section class="av-section" style="padding-top: 0">
+    <div class="cta-banner">
+      <div class="cta-banner-text">
+        <span class="cta-banner-icon">&#128640;</span>
+        <div>
+          <h3>Ready to take the next step in your career?</h3>
+          <p>
+            Join thousands of professionals finding their dream jobs or connect
+            your company with top talent.
+          </p>
+        </div>
+      </div>
+      <div class="cta-banner-actions">
+        <a
+          href="{{ url_for('signup', role='candidate') }}"
+          class="btn btn-white"
+          >Explore Jobs</a
+        >
+        <a
+          href="{{ url_for('signup', role='employer') }}"
+          class="btn btn-ghost-white"
+          >Post a Job</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CONTACT ============================== -->
+  <section class="av-section" id="contact">
+    <div class="av-section-head">
+      <span class="av-eyebrow">GET IN TOUCH</span>
+      <h2 class="av-heading">We'd love to hear from you</h2>
+      <p>
+        Have a question about the platform, pricing, or a partnership? Reach out
+        and our team will get back to you shortly.
+      </p>
+    </div>
+
+    <div class="av-contact">
+      <div class="av-contact__cards">
+        <div class="av-contact-card">
+          <div class="av-contact-card__icon">&#9993;&#65039;</div>
+          <div>
+            <strong>Email us</strong>
+            <a href="mailto:hello@anveshai.com">hello@anveshai.com</a>
+          </div>
+        </div>
+        <div class="av-contact-card">
+          <div class="av-contact-card__icon">&#128222;</div>
+          <div>
+            <strong>Call us</strong>
+            <span>+91 (000) 000-0000</span>
+          </div>
+        </div>
+        <div class="av-contact-card">
+          <div class="av-contact-card__icon">&#128205;</div>
+          <div>
+            <strong>Office</strong>
+            <span>Bengaluru, Karnataka, India</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="av-contact-panel">
+        <h3>Prefer to talk it through?</h3>
+        <p>
+          Book a quick call with our team and we'll walk you through how Anvesh
+          AI fits your hiring — or your job search.
+        </p>
+        <a href="mailto:hello@anveshai.com" class="btn"
+          >Send us a message &rarr;</a
+        >
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FOOTER ============================== -->
+  <footer class="site-footer">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <img
+          src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
+          alt="Anvesh AI"
+          style="height: 34px; width: auto; margin-bottom: 10px"
+        />
+        <p>AI Powered Recruitment Platform</p>
+      </div>
+      <div class="footer-col">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="{{ url_for('index') }}">Home</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#how-it-works">How It Works</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>For Candidates</h4>
+        <ul>
+          <li><a href="#">Browse Jobs</a></li>
+          <li>
+            <a href="{{ url_for('signup', role='candidate') }}"
+              >Create Profile</a
+            >
+          </li>
+          <li><a href="#">Resume Builder</a></li>
+          <li><a href="#">Career Tips</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>For Employers</h4>
+        <ul>
+          <li>
+            <a href="{{ url_for('signup', role='employer') }}">Post a Job</a>
+          </li>
+          <li><a href="#">Browse Candidates</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#">Resources</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="#about">About Us</a></li>
+          <li><a href="#contact">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Follow Us</h4>
+        <div class="social-icons">
+          <a href="#">in</a>
+          <a href="#">tw</a>
+          <a href="#">fb</a>
+          <a href="#">ig</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">&copy; 2026 Anvesh AI. All rights reserved.</div>
+  </footer>
+</div>
 
 {% endblock %}
