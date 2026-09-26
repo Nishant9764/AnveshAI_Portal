@@ -1,71 +1,301 @@
 {% extends "base.html" %} {% block title %}Sign Up - Anvesh AI{% endblock %} {%
 block content %}
 
-<div class="auth-page">
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+
+  /* ============================================================
+       Ambient auth shell
+       ============================================================ */
+  .auth-shell {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 56px 20px;
+    overflow: hidden;
+    background: #05060f;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+      sans-serif;
+  }
+  .auth-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(
+        circle at 18% 22%,
+        rgba(79, 70, 229, 0.4),
+        transparent 55%
+      ),
+      radial-gradient(
+        circle at 84% 78%,
+        rgba(124, 58, 237, 0.32),
+        transparent 55%
+      ),
+      radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: auto, auto, 28px 28px;
+  }
+  .auth-shell__watermark {
+    position: absolute;
+    top: -8%;
+    right: -6%;
+    width: 46%;
+    max-width: 520px;
+    opacity: 0.06;
+    transform: rotate(8deg);
+    pointer-events: none;
+  }
+  .auth-shell__watermark img {
+    width: 100%;
+    display: block;
+  }
+
+  .auth-chip {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(6px);
+    color: #fff;
+  }
+  .auth-chip strong {
+    display: block;
+    font-family: "Sora", sans-serif;
+    font-size: 15px;
+  }
+  .auth-chip span {
+    display: block;
+    font-size: 11px;
+    color: #b7bbe0;
+  }
+  .auth-chip--tl {
+    top: 12%;
+    left: 6%;
+  }
+  .auth-chip--br {
+    bottom: 12%;
+    right: 6%;
+  }
+  @media (max-width: 1080px) {
+    .auth-chip {
+      display: none;
+    }
+  }
+
+  /* ============================================================
+       Glass card
+       ============================================================ */
+  .auth-card {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    max-width: 440px;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 26px;
+    padding: 42px 38px 34px;
+    box-shadow: 0 40px 90px rgba(2, 6, 23, 0.55);
+    overflow: hidden;
+  }
+  .auth-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed, #22d3ee);
+  }
+
+  .auth-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    text-decoration: none;
+    margin-bottom: 22px;
+  }
+  .auth-brand__icon {
+    height: 46px;
+    width: auto;
+    display: block;
+    margin-bottom: 10px;
+  }
+  .auth-brand__word {
+    font-family: "Sora", sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.2px;
+    color: #0b0e24;
+  }
+  .auth-brand__word em {
+    font-style: normal;
+    background: linear-gradient(90deg, #4f46e5, #7c3aed);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .auth-brand__tag {
+    margin-top: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    color: #9ca3af;
+  }
+  .auth-brand__tag i {
+    color: #6366f1;
+    font-style: normal;
+    margin: 0 6px;
+  }
+  .auth-brand__tag i.dot-violet {
+    color: #a855f7;
+  }
+
+  .auth-card h1 {
+    text-align: center;
+    font-family: "Sora", sans-serif;
+    font-size: 24px;
+    letter-spacing: -0.4px;
+    margin: 0 0 8px;
+    color: #0b0e24;
+  }
+  .auth-card .auth-subtitle {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 26px;
+  }
+
+  /* Role toggle — segmented control */
+  .auth-shell .role-toggle {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: #f1f2fa;
+    margin-bottom: 26px;
+  }
+  .auth-shell .role-toggle a {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .auth-shell .role-toggle a.active {
+    background: #ffffff;
+    color: #4f46e5;
+    box-shadow: 0 4px 14px rgba(17, 24, 39, 0.1);
+  }
+
+  /* Form */
+  .auth-shell .form-group {
+    margin-bottom: 18px;
+  }
+  .auth-shell .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .auth-shell .form-control {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border-radius: 11px;
+    border: 1.5px solid #e5e7eb;
+    font-size: 14.5px;
+    color: #111827;
+    background: #fff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .auth-shell .form-control:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  }
+  .auth-shell .btn-primary {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
+  }
+  .auth-shell .btn-primary:hover {
+    filter: brightness(1.06);
+  }
+  .auth-shell .btn-block {
+    width: 100%;
+  }
+
+  .auth-shell .auth-footer-link {
+    text-align: center;
+    font-size: 13.5px;
+    color: #6b7280;
+  }
+  .auth-shell .auth-footer-link a {
+    color: #4f46e5;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  @media (max-width: 480px) {
+    .auth-card {
+      padding: 34px 24px 28px;
+    }
+    .auth-shell .form-row {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+  }
+</style>
+
+<div class="auth-shell">
+  <div class="auth-shell__watermark">
+    <img
+      src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
+      alt=""
+    />
+  </div>
+
+  <div class="auth-chip auth-chip--tl">
+    <strong>50,000+</strong>
+    <span>professionals matched</span>
+  </div>
+  <div class="auth-chip auth-chip--br">
+    <strong>2,000+</strong>
+    <span>companies hiring</span>
+  </div>
+
   <div class="auth-card">
-    <!-- Brand Logo -->
-    <div
-      style="
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        margin: 0 auto 28px;
-        padding: 0;
-      "
-    >
-      <a
-        href="{{ url_for('index') }}"
-        class="logo"
-        style="
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          margin: 0;
-          padding: 0;
-          text-decoration: none;
-        "
+    <a href="{{ url_for('index') }}" class="auth-brand">
+      <img
+        class="auth-brand__icon"
+        src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
+        alt="Anvesh AI"
+      />
+      <span class="auth-brand__word">Anvesh <em>AI</em></span>
+      <span class="auth-brand__tag"
+        >DISCOVER <i>&bull;</i> ANALYZE
+        <i class="dot-violet">&bull;</i> HIRE</span
       >
-        <img
-          src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
-          alt="Anvesh AI"
-          class="logo-mark"
-          style="
-            display: block !important;
-            width: 72px !important;
-            height: 72px !important;
-            max-width: 72px !important;
-            object-fit: contain !important;
-            object-position: center !important;
+    </a>
 
-            margin: 0 auto !important;
-            padding: 0 !important;
-
-            border: none !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
-          "
-        />
-      </a>
-    </div>
-
-    <!-- Heading -->
-    <h1 style="text-align: center; margin-bottom: 10px; letter-spacing: -0.8px">
-      Create your account
-    </h1>
-
-    <p
-      class="auth-subtitle"
-      style="text-align: center; line-height: 1.6; margin-bottom: 28px"
-    >
-      Join 50,000+ professionals and 2,000+ companies
-    </p>
+    <h1>Create your account</h1>
+    <p class="auth-subtitle">Join 50,000+ professionals and 2,000+ companies</p>
 
     <!-- Role Selection -->
-    <div class="role-toggle" style="margin-bottom: 28px">
+    <div class="role-toggle">
       <a
         href="{{ url_for('signup', role='candidate') }}"
         class="{{ 'active' if role == 'candidate' else '' }}"
