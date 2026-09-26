@@ -26,14 +26,14 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
 {% endblock %} {% block dashboard_content %}
 <a
   href="{{ url_for('candidate_applications') }}"
-  style="font-size: 13px; color: #888"
+  style="font-size: 13px; color: var(--stone); text-decoration: none"
   >&larr; Back to My Applications</a
 >
 
 <div class="card" style="max-width: 720px; margin-top: 16px">
-  <div class="card-header">
+  <div class="card-header" style="display: block">
     <h3>{{ a.title }}</h3>
-    <p style="color: #888; font-size: 13px">
+    <p style="color: var(--stone); font-size: 13px; margin-top: 4px">
       {{ a.company_name }} &middot; {{ a.location }} &middot; {{ a.job_type }}
     </p>
   </div>
@@ -49,7 +49,7 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
   >
     <span
       class="status-chip"
-      style="{% if a.status|lower == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}"
+      style="{% if a.status|lower == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger); border-color: transparent;{% endif %}"
     >
       {{ a.status }}
     </span>
@@ -70,13 +70,13 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
 
   {% if a.screening_status in ('pending', 'processing') %}
   <div class="empty-state" style="padding: 30px 0">
-    <p style="font-size: 13.5px; color: #666">
+    <p style="font-size: 13.5px; color: var(--stone)">
       Still scoring your resume against this job — check back shortly.
     </p>
   </div>
   {% elif a.screening_status == 'failed' %}
   <div class="empty-state" style="padding: 30px 0">
-    <p style="font-size: 13.5px; color: #c0392b">
+    <p style="font-size: 13.5px; color: var(--clay)">
       Automated scoring hit an error and needs a retry. If this doesn't resolve,
       reach out to the employer directly.
     </p>
@@ -89,36 +89,84 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
     style="
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 12px;
       font-size: 13px;
-      color: #444;
-      margin-bottom: 18px;
+      color: var(--ink);
+      margin-bottom: 20px;
     "
   >
-    <div>
-      Technical match:
+    <div
+      style="
+        padding: 10px 12px;
+        background: var(--paper-dim);
+        border-radius: var(--radius-sm);
+      "
+    >
+      Technical match
       <strong
+        style="
+          display: block;
+          font-family: 'Fraunces', serif;
+          font-size: 17px;
+          margin-top: 2px;
+        "
         >{{ a.technical_match_score if a.technical_match_score is not none else
         '—' }}/100</strong
       >
     </div>
-    <div>
-      Experience match:
+    <div
+      style="
+        padding: 10px 12px;
+        background: var(--paper-dim);
+        border-radius: var(--radius-sm);
+      "
+    >
+      Experience match
       <strong
+        style="
+          display: block;
+          font-family: 'Fraunces', serif;
+          font-size: 17px;
+          margin-top: 2px;
+        "
         >{{ a.experience_match_score if a.experience_match_score is not none
         else '—' }}/100</strong
       >
     </div>
-    <div>
-      Soft skills:
+    <div
+      style="
+        padding: 10px 12px;
+        background: var(--paper-dim);
+        border-radius: var(--radius-sm);
+      "
+    >
+      Soft skills
       <strong
+        style="
+          display: block;
+          font-family: 'Fraunces', serif;
+          font-size: 17px;
+          margin-top: 2px;
+        "
         >{{ a.soft_skills_score if a.soft_skills_score is not none else '—'
         }}/100</strong
       >
     </div>
-    <div>
-      Quantified impact:
+    <div
+      style="
+        padding: 10px 12px;
+        background: var(--paper-dim);
+        border-radius: var(--radius-sm);
+      "
+    >
+      Quantified impact
       <strong
+        style="
+          display: block;
+          font-family: 'Fraunces', serif;
+          font-size: 17px;
+          margin-top: 2px;
+        "
         >{{ a.impact_score if a.impact_score is not none else '—' }}/100</strong
       >
     </div>
@@ -126,7 +174,12 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
 
   {% if a.ats_summary %}
   <p
-    style="font-size: 13px; color: #555; line-height: 1.6; margin-bottom: 18px"
+    style="
+      font-size: 13px;
+      color: var(--stone);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    "
   >
     {{ a.ats_summary }}
   </p>
@@ -135,7 +188,7 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
     style="
       font-size: 12.5px;
       font-weight: 600;
-      color: #16a34a;
+      color: var(--moss);
       margin-bottom: 6px;
     "
   >
@@ -144,7 +197,11 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
   <div class="job-tags" style="margin-bottom: 16px">
     {% for s in a.matched_skills %}<span
       class="tag"
-      style="background: #ecfdf5; color: #16a34a"
+      style="
+        background: var(--moss-bg);
+        color: var(--moss);
+        border-color: transparent;
+      "
       >{{ s }}</span
     >{% endfor %}
   </div>
@@ -153,7 +210,7 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
     style="
       font-size: 12.5px;
       font-weight: 600;
-      color: #c98a1f;
+      color: var(--gold);
       margin-bottom: 6px;
     "
   >
@@ -162,16 +219,22 @@ block page_title %}Application Detail{% endblock %} {% block sidebar_nav %}
   <div class="job-tags" style="margin-bottom: 16px">
     {% for s in a.missing_skills %}<span
       class="tag"
-      style="background: #fffbeb; color: #c98a1f"
+      style="
+        background: var(--gold-bg);
+        color: var(--gold);
+        border-color: transparent;
+      "
       >{{ s }}</span
     >{% endfor %}
   </div>
   {% endif %} {% if a.round1_score is not none %}
-  <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee" />
+  <hr class="eyebrow-divider" />
   <h4 style="font-size: 14px; margin-bottom: 8px">
     Round 1 Assessment: {{ a.round1_score }}%
   </h4>
-  <p style="font-size: 12.5px; color: #888">{{ a.round1_verdict }}</p>
+  <p style="font-size: 12.5px; color: var(--stone-light)">
+    {{ a.round1_verdict }}
+  </p>
   {% endif %} {% endif %}
 </div>
 {% endblock %}
