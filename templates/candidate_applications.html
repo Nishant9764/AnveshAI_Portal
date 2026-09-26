@@ -75,7 +75,7 @@ selectattr('screening_status', 'in', ['pending', 'processing']) | list | length
           {% set s = app.status|lower %}
           <span
             class="status-chip {{ 'active' if s in ['shortlisted','offered'] else ('draft' if s == 'interview' else ('closed' if s == 'applied' else '')) }}"
-            style="{% if s == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger);{% endif %}"
+            style="{% if s == 'rejected' %}background:var(--color-danger-bg); color: var(--color-danger); border-color: transparent;{% endif %}"
           >
             {{ app.status }}
           </span>
@@ -102,23 +102,4 @@ selectattr('screening_status', 'in', ['pending', 'processing']) | list | length
   </div>
   {% endif %}
 </div>
-<style>
-  @keyframes spin-pulse {
-    0%,
-    100% {
-      opacity: 0.3;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-  .spin-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: currentColor;
-    display: inline-block;
-    animation: spin-pulse 1s ease-in-out infinite;
-  }
-</style>
 {% endblock %}
