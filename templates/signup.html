@@ -2,495 +2,622 @@
 block content %}
 
 <style>
-  @import url("https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap");
+  @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap");
 
-  /* ============================================================
-       Ambient auth shell
-       ============================================================ */
-  .auth-shell {
-    position: relative;
-    min-height: 100vh;
+  .av-auth {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 56px 20px;
-    overflow: hidden;
-    background: #05060f;
+    min-height: 100vh;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
       sans-serif;
+    background: #faf9f5;
   }
-  .auth-shell::before {
+
+  /* ============================================================
+       Form side
+       ============================================================ */
+  .av-auth__form-side {
+    flex: 1 1 52%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 56px 8vw;
+  }
+  .av-auth__form-inner {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .av-brand-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    margin-bottom: 48px;
+  }
+  .av-brand-mini img {
+    height: 26px;
+    width: auto;
+  }
+  .av-brand-mini span {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 16.5px;
+    color: #101223;
+  }
+
+  .av-auth__form-inner h1 {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 38px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #101223;
+    margin: 0 0 10px;
+  }
+  .av-auth__form-inner .auth-subtitle {
+    font-size: 14.5px;
+    color: #7c7b74;
+    margin: 0 0 34px;
+    line-height: 1.6;
+  }
+
+  /* Role tabs — underline style */
+  .av-auth .role-toggle {
+    display: flex;
+    gap: 30px;
+    border-bottom: 1.5px solid #e7e5da;
+    margin-bottom: 36px;
+  }
+  .av-auth .role-toggle a {
+    position: relative;
+    padding-bottom: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #9a988f;
+    text-decoration: none;
+  }
+  .av-auth .role-toggle a.active {
+    color: #101223;
+  }
+  .av-auth .role-toggle a.active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1.5px;
+    height: 2px;
+    background: #4f46e5;
+  }
+
+  /* Underline fields */
+  .av-auth .form-group {
+    margin-bottom: 24px;
+  }
+  .av-auth .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .av-auth label {
+    display: block !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase;
+    color: #9a988f !important;
+    margin-bottom: 9px !important;
+  }
+  .av-auth .form-control {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 1.5px solid #dedcd1;
+    background: transparent;
+    border-radius: 0;
+    padding: 6px 2px 10px;
+    font-size: 15.5px;
+    color: #101223;
+    font-family: "Inter", sans-serif;
+    transition: border-color 0.2s ease;
+  }
+  .av-auth .form-control:focus {
+    outline: none;
+    border-bottom-color: #4f46e5;
+  }
+  .av-auth .form-control::placeholder {
+    color: #c2c0b5;
+  }
+
+  .av-auth .btn-primary {
+    background: #4f46e5;
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .av-auth .btn-primary:hover {
+    background: #3f37c9;
+    transform: translateY(-1px);
+  }
+  .av-auth .btn-block {
+    width: 100%;
+  }
+
+  .av-auth .auth-footer-link {
+    text-align: left;
+    font-size: 13.5px;
+    color: #7c7b74;
+  }
+  .av-auth .auth-footer-link a {
+    color: #101223;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: #4f46e5;
+    text-underline-offset: 3px;
+  }
+
+  /* ============================================================
+       Visual side
+       ============================================================ */
+  .av-auth__visual {
+    position: relative;
+    flex: 1 1 48%;
+    background: #101223;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 64px 56px;
+    overflow: hidden;
+  }
+  .av-auth__visual::before {
     content: "";
     position: absolute;
     inset: 0;
     background-image: radial-gradient(
-        circle at 18% 22%,
-        rgba(79, 70, 229, 0.4),
-        transparent 55%
-      ),
-      radial-gradient(
-        circle at 84% 78%,
-        rgba(124, 58, 237, 0.32),
-        transparent 55%
-      ),
-      radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    background-size: auto, auto, 28px 28px;
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+    opacity: 0.5;
   }
-  .auth-shell__watermark {
-    position: absolute;
-    top: -8%;
-    right: -6%;
-    width: 46%;
-    max-width: 520px;
-    opacity: 0.06;
-    transform: rotate(8deg);
-    pointer-events: none;
-  }
-  .auth-shell__watermark img {
-    width: 100%;
-    display: block;
+  .av-auth__visual > * {
+    position: relative;
+    z-index: 1;
   }
 
-  .auth-chip {
+  .av-auth__eyebrow {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    color: #a5a2ff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .av-auth__eyebrow::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #a5a2ff;
+  }
+
+  .av-auth__statement {
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: clamp(1.9rem, 2vw + 1.2rem, 2.6rem);
+    line-height: 1.22;
+    margin: 22px 0 0;
+    max-width: 12ch;
+  }
+  .av-auth__statement em {
+    font-style: italic;
+    color: #a5a2ff;
+  }
+
+  /* Mock cards */
+  .av-mock-stage {
+    position: relative;
+    height: 260px;
+    margin: 30px 0;
+  }
+  .mock-card {
     position: absolute;
+    background: #ffffff;
+    color: #101223;
+    border-radius: 18px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+  }
+  .mock-card--main {
+    top: 0;
+    left: 6%;
+    width: 260px;
+    padding: 22px;
+    transform: rotate(-3deg);
     z-index: 2;
+  }
+  .mock-card--secondary {
+    bottom: 0;
+    right: 4%;
+    width: 210px;
+    padding: 18px;
+    transform: rotate(4deg);
+    z-index: 1;
+    opacity: 0.96;
+  }
+  .mock-card__status {
+    position: absolute;
+    top: -10px;
+    right: 16px;
+    background: #dcfce7;
+    color: #16a34a;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .mock-card__top {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(6px);
+  }
+  .mock-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #4f46e5;
     color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
   }
-  .auth-chip strong {
+  .mock-card__top strong {
     display: block;
-    font-family: "Sora", sans-serif;
-    font-size: 15px;
+    font-size: 13.5px;
   }
-  .auth-chip span {
+  .mock-card__top span {
     display: block;
     font-size: 11px;
-    color: #b7bbe0;
+    color: #8a8a86;
   }
-  .auth-chip--tl {
-    top: 12%;
-    left: 6%;
-  }
-  .auth-chip--br {
-    bottom: 12%;
-    right: 6%;
-  }
-  @media (max-width: 1080px) {
-    .auth-chip {
-      display: none;
-    }
-  }
-
-  /* ============================================================
-       Glass card
-       ============================================================ */
-  .auth-card {
+  .mock-ring {
     position: relative;
-    z-index: 3;
-    width: 100%;
-    max-width: 440px;
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 26px;
-    padding: 42px 38px 34px;
-    box-shadow: 0 40px 90px rgba(2, 6, 23, 0.55);
-    overflow: hidden;
+    width: 92px;
+    height: 92px;
+    margin: 18px auto 6px;
+    border-radius: 50%;
+    background: conic-gradient(#4f46e5 0% 96%, #edece5 96% 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .auth-card::before {
+  .mock-ring::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #4f46e5, #7c3aed, #22d3ee);
+    inset: 9px;
+    background: #fff;
+    border-radius: 50%;
   }
-
-  .auth-brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  .mock-ring__label {
+    position: relative;
+    z-index: 1;
     text-align: center;
-    text-decoration: none;
-    margin-bottom: 22px;
   }
-  .auth-brand__icon {
-    height: 46px;
-    width: auto;
+  .mock-ring__label strong {
     display: block;
-    margin-bottom: 10px;
+    font-family: "Fraunces", serif;
+    font-size: 19px;
   }
-  .auth-brand__word {
-    font-family: "Sora", sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    letter-spacing: -0.2px;
-    color: #0b0e24;
+  .mock-ring__label span {
+    display: block;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #8a8a86;
   }
-  .auth-brand__word em {
-    font-style: normal;
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .auth-brand__tag {
-    margin-top: 4px;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.6px;
-    color: #9ca3af;
-  }
-  .auth-brand__tag i {
-    color: #6366f1;
-    font-style: normal;
-    margin: 0 6px;
-  }
-  .auth-brand__tag i.dot-violet {
-    color: #a855f7;
-  }
-
-  .auth-card h1 {
-    text-align: center;
-    font-family: "Sora", sans-serif;
-    font-size: 24px;
-    letter-spacing: -0.4px;
-    margin: 0 0 8px;
-    color: #0b0e24;
-  }
-  .auth-card .auth-subtitle {
-    text-align: center;
-    color: #6b7280;
-    font-size: 14px;
-    line-height: 1.6;
-    margin-bottom: 26px;
-  }
-
-  /* Role toggle — segmented control */
-  .auth-shell .role-toggle {
+  .mock-tags {
     display: flex;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 12px;
-    background: #f1f2fa;
-    margin-bottom: 26px;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
   }
-  .auth-shell .role-toggle a {
+  .mock-tags span {
+    background: #f3f2ec;
+    color: #4b4a45;
+    font-size: 10.5px;
+    padding: 5px 10px;
+    border-radius: 999px;
+  }
+  .mock-card__mini-label {
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: #9a988f;
+    margin-bottom: 14px;
+  }
+  .mock-steps {
+    display: flex;
+    gap: 6px;
+  }
+  .mock-steps .step {
     flex: 1;
     text-align: center;
-    padding: 10px 8px;
-    border-radius: 9px;
-    font-size: 13.5px;
+    font-size: 9.5px;
     font-weight: 600;
-    color: #6b7280;
-    text-decoration: none;
-    transition: all 0.2s ease;
+    color: #c2c0b5;
+    padding-top: 10px;
+    border-top: 3px solid #edece5;
   }
-  .auth-shell .role-toggle a.active {
-    background: #ffffff;
+  .mock-steps .step.done {
+    color: #101223;
+    border-top-color: #4f46e5;
+  }
+  .mock-steps .step.active {
     color: #4f46e5;
-    box-shadow: 0 4px 14px rgba(17, 24, 39, 0.1);
+    border-top-color: #4f46e5;
   }
 
-  /* Form */
-  .auth-shell .form-group {
-    margin-bottom: 18px;
-  }
-  .auth-shell .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  .av-auth__proof {
+    display: flex;
+    align-items: center;
     gap: 14px;
   }
-  .auth-shell .form-control {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px 14px;
-    border-radius: 11px;
-    border: 1.5px solid #e5e7eb;
-    font-size: 14.5px;
-    color: #111827;
-    background: #fff;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  .av-auth__proof .dots {
+    display: flex;
   }
-  .auth-shell .form-control:focus {
-    outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+  .av-auth__proof .dots span {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid #101223;
+    margin-left: -8px;
+    display: block;
   }
-  .auth-shell .btn-primary {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    border: none;
-    border-radius: 12px;
+  .av-auth__proof .dots span:first-child {
+    margin-left: 0;
+  }
+  .av-auth__proof p {
+    margin: 0;
+    font-size: 12.5px;
+    color: #b7b6e0;
+  }
+  .av-auth__proof strong {
     color: #fff;
-    cursor: pointer;
-    box-shadow: 0 14px 28px rgba(79, 70, 229, 0.35);
-  }
-  .auth-shell .btn-primary:hover {
-    filter: brightness(1.06);
-  }
-  .auth-shell .btn-block {
-    width: 100%;
   }
 
-  .auth-shell .auth-footer-link {
-    text-align: center;
-    font-size: 13.5px;
-    color: #6b7280;
-  }
-  .auth-shell .auth-footer-link a {
-    color: #4f46e5;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  @media (max-width: 480px) {
-    .auth-card {
-      padding: 34px 24px 28px;
+  @media (max-width: 980px) {
+    .av-auth__visual {
+      display: none;
     }
-    .auth-shell .form-row {
+    .av-auth__form-side {
+      padding: 48px 7vw;
+    }
+  }
+  @media (max-width: 480px) {
+    .av-auth .form-row {
       grid-template-columns: 1fr;
       gap: 0;
+    }
+    .av-auth__form-inner h1 {
+      font-size: 30px;
     }
   }
 </style>
 
-<div class="auth-shell">
-  <div class="auth-shell__watermark">
-    <img
-      src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
-      alt=""
-    />
-  </div>
-
-  <div class="auth-chip auth-chip--tl">
-    <strong>50,000+</strong>
-    <span>professionals matched</span>
-  </div>
-  <div class="auth-chip auth-chip--br">
-    <strong>2,000+</strong>
-    <span>companies hiring</span>
-  </div>
-
-  <div class="auth-card">
-    <a href="{{ url_for('index') }}" class="auth-brand">
-      <img
-        class="auth-brand__icon"
-        src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
-        alt="Anvesh AI"
-      />
-      <span class="auth-brand__word">Anvesh <em>AI</em></span>
-      <span class="auth-brand__tag"
-        >DISCOVER <i>&bull;</i> ANALYZE
-        <i class="dot-violet">&bull;</i> HIRE</span
-      >
-    </a>
-
-    <h1>Create your account</h1>
-    <p class="auth-subtitle">Join 50,000+ professionals and 2,000+ companies</p>
-
-    <!-- Role Selection -->
-    <div class="role-toggle">
-      <a
-        href="{{ url_for('signup', role='candidate') }}"
-        class="{{ 'active' if role == 'candidate' else '' }}"
-        aria-label="Create Candidate account"
-      >
-        <span style="font-size: 16px; margin-right: 6px">&#128100;</span>
-        Candidate
+<div class="av-auth">
+  <!-- ============================== FORM SIDE ============================== -->
+  <div class="av-auth__form-side">
+    <div class="av-auth__form-inner">
+      <a href="{{ url_for('index') }}" class="av-brand-mini">
+        <img
+          src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
+          alt="Anvesh AI"
+        />
+        <span>Anvesh AI</span>
       </a>
 
-      <a
-        href="{{ url_for('signup', role='employer') }}"
-        class="{{ 'active' if role == 'employer' else '' }}"
-        aria-label="Create Employer account"
-      >
-        <span style="font-size: 16px; margin-right: 6px">&#127970;</span>
-        Employer
-      </a>
-    </div>
+      <h1>Create your account</h1>
+      <p class="auth-subtitle">
+        Join 50,000+ professionals and 2,000+ companies already on Anvesh AI.
+      </p>
 
-    <!-- Signup Form -->
-    <form method="POST" action="{{ url_for('signup') }}">
-      <!-- Preserve role -->
-      <input type="hidden" name="role" value="{{ role }}" />
-
-      <!-- Full Name / Company -->
-      <div class="form-group">
-        <label
-          for="full_name"
-          style="font-weight: 600; margin-bottom: 8px; display: block"
+      <!-- Role Selection -->
+      <div class="role-toggle">
+        <a
+          href="{{ url_for('signup', role='candidate') }}"
+          class="{{ 'active' if role == 'candidate' else '' }}"
+          aria-label="Create Candidate account"
         >
-          {{ 'Full name' if role == 'candidate' else 'Company / Your name' }}
-        </label>
+          &#128100; Candidate
+        </a>
 
-        <input
-          type="text"
-          id="full_name"
-          name="full_name"
-          class="form-control"
-          placeholder="{{ 'Jane Doe' if role == 'candidate' else 'Acme Corp / Jane Doe' }}"
-          autocomplete="name"
-          required
-        />
+        <a
+          href="{{ url_for('signup', role='employer') }}"
+          class="{{ 'active' if role == 'employer' else '' }}"
+          aria-label="Create Employer account"
+        >
+          &#127970; Employer
+        </a>
       </div>
 
-      <!-- Email -->
-      <div class="form-group">
-        <label
-          for="email"
-          style="font-weight: 600; margin-bottom: 8px; display: block"
-        >
-          Email address
-        </label>
+      <!-- Signup Form -->
+      <form method="POST" action="{{ url_for('signup') }}">
+        <!-- Preserve role -->
+        <input type="hidden" name="role" value="{{ role }}" />
 
-        <input
-          type="email"
-          id="email"
-          name="email"
-          class="form-control"
-          placeholder="you@example.com"
-          autocomplete="email"
-          required
-        />
-      </div>
-
-      <!-- Password Row -->
-      <div class="form-row">
+        <!-- Full Name / Company -->
         <div class="form-group">
-          <label
-            for="password"
-            style="font-weight: 600; margin-bottom: 8px; display: block"
-          >
-            Password
+          <label for="full_name">
+            {{ 'Full name' if role == 'candidate' else 'Company / Your name' }}
           </label>
 
           <input
-            type="password"
-            id="password"
-            name="password"
+            type="text"
+            id="full_name"
+            name="full_name"
             class="form-control"
-            placeholder="Create a password"
-            autocomplete="new-password"
+            placeholder="{{ 'Jane Doe' if role == 'candidate' else 'Acme Corp / Jane Doe' }}"
+            autocomplete="name"
             required
           />
         </div>
 
+        <!-- Email -->
         <div class="form-group">
-          <label
-            for="confirm_password"
-            style="font-weight: 600; margin-bottom: 8px; display: block"
-          >
-            Confirm password
-          </label>
+          <label for="email"> Email address </label>
 
           <input
-            type="password"
-            id="confirm_password"
-            name="confirm_password"
+            type="email"
+            id="email"
+            name="email"
             class="form-control"
-            placeholder="Repeat password"
-            autocomplete="new-password"
+            placeholder="you@example.com"
+            autocomplete="email"
             required
           />
         </div>
-      </div>
 
-      <!-- Password Security Hint -->
-      <div
+        <!-- Password Row -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="password"> Password </label>
+
+            <input
+              type="password"
+              id="password"
+              name="password"
+              class="form-control"
+              placeholder="Create a password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="confirm_password"> Confirm password </label>
+
+            <input
+              type="password"
+              id="confirm_password"
+              name="confirm_password"
+              class="form-control"
+              placeholder="Repeat password"
+              autocomplete="new-password"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Password Security Hint -->
+        <p
+          style="
+            font-size: 12px;
+            color: #9a988f;
+            margin: -10px 0 26px;
+            line-height: 1.55;
+          "
+        >
+          &#128274; Use a strong password to help keep your account and
+          recruitment information secure.
+        </p>
+
+        <!-- Signup Button -->
+        <button
+          type="submit"
+          class="btn btn-primary btn-block"
+          style="
+            min-height: 50px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.1px;
+          "
+        >
+          Sign up as {{ 'Candidate' if role == 'candidate' else 'Employer' }}
+          <span style="margin-left: 7px"> &rarr; </span>
+        </button>
+      </form>
+
+      <p
         style="
-          display: flex;
-          align-items: flex-start;
-          gap: 9px;
-          padding: 12px 14px;
-          margin: 4px 0 18px;
-          border-radius: 10px;
-          background: rgba(79, 70, 229, 0.05);
-          border: 1px solid rgba(79, 70, 229, 0.1);
+          font-size: 11.5px;
+          color: #c2c0b5;
+          margin: 22px 0 26px;
+          letter-spacing: 0.4px;
         "
       >
-        <span style="font-size: 15px; line-height: 1.4"> &#128274; </span>
-
-        <span style="font-size: 12px; line-height: 1.55; opacity: 0.78">
-          Use a strong password to help keep your account and recruitment
-          information secure.
-        </span>
-      </div>
-
-      <!-- Signup Button -->
-      <button
-        type="submit"
-        class="btn btn-primary btn-block"
-        style="
-          margin-top: 6px;
-          min-height: 50px;
-          font-size: 15px;
-          font-weight: 700;
-          letter-spacing: 0.1px;
-          transition: all 0.25s ease;
-        "
-      >
-        Sign up as {{ 'Candidate' if role == 'candidate' else 'Employer' }}
-
-        <span style="margin-left: 7px; font-size: 16px"> &rarr; </span>
-      </button>
-    </form>
-
-    <!-- Secure Access Divider -->
-    <div
-      style="
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 28px 0 22px;
-        color: #9ca3af;
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 0.8px;
-      "
-    >
-      <span
-        style="flex: 1; height: 1px; background: currentColor; opacity: 0.25"
-      ></span>
-
-      <span> SECURE REGISTRATION </span>
-
-      <span
-        style="flex: 1; height: 1px; background: currentColor; opacity: 0.25"
-      ></span>
-    </div>
-
-    <!-- Trust Message -->
-    <div
-      style="
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 13px 14px;
-        border-radius: 10px;
-        background: rgba(79, 70, 229, 0.05);
-        border: 1px solid rgba(79, 70, 229, 0.1);
-        margin-bottom: 24px;
-      "
-    >
-      <span style="font-size: 16px; line-height: 1.4"> &#10024; </span>
-
-      <span style="font-size: 12px; line-height: 1.55; opacity: 0.78">
-        Create your Anvesh AI account and take the next step toward smarter,
+        SECURE REGISTRATION &middot; &#10024; Take the next step toward smarter,
         more connected recruitment.
-      </span>
+      </p>
+
+      <!-- Login -->
+      <div class="auth-footer-link">
+        Already have an account?
+        <a href="{{ url_for('login', role=role) }}"> Log in </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== VISUAL SIDE ============================== -->
+  <div class="av-auth__visual">
+    <span class="av-auth__eyebrow">REAL-TIME MATCHING</span>
+
+    <div class="av-mock-stage">
+      <div class="mock-card mock-card--main">
+        <span class="mock-card__status">Shortlisted</span>
+        <div class="mock-card__top">
+          <div class="mock-avatar">AM</div>
+          <div>
+            <strong>Alex Morgan</strong>
+            <span>Senior Product Designer</span>
+          </div>
+        </div>
+        <div class="mock-ring">
+          <div class="mock-ring__label">
+            <strong>96%</strong>
+            <span>Match</span>
+          </div>
+        </div>
+        <div class="mock-tags">
+          <span>Figma</span><span>UI/UX</span><span>Design Systems</span>
+        </div>
+      </div>
+
+      <div class="mock-card mock-card--secondary">
+        <span class="mock-card__mini-label">Pipeline</span>
+        <div class="mock-steps">
+          <div class="step done">Applied</div>
+          <div class="step done">Screened</div>
+          <div class="step active">Interview</div>
+          <div class="step">Offer</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Login -->
-    <div class="auth-footer-link">
-      Already have an account?
-
-      <a href="{{ url_for('login', role=role) }}"> Log in </a>
+    <div>
+      <p class="av-auth__statement">
+        Matched on skill.<br /><em>Hired on fit.</em>
+      </p>
+      <div class="av-auth__proof" style="margin-top: 26px">
+        <div class="dots">
+          <span style="background: #c7d2fe"></span>
+          <span style="background: #fbcfe8"></span>
+          <span style="background: #bbf7d0"></span>
+          <span style="background: #fde68a"></span>
+        </div>
+        <p>
+          <strong>50,000+</strong> professionals &middot;
+          <strong>2,000+</strong> companies
+        </p>
+      </div>
     </div>
   </div>
 </div>
