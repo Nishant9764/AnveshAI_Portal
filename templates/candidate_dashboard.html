@@ -31,6 +31,30 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
   ><span class="nav-icon">{{ icon('settings') }}</span> Settings</a
 >
 {% endblock %} {% block dashboard_content %}
+
+<div class="hero">
+  <div class="hero-text">
+    <h2>Let's find your next role.</h2>
+    <p>Matches below are ranked against your tech stack and interests.</p>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="hero-stat-num">{{ stats.applied }}</span>
+      <span class="hero-stat-label">Applied</span>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">{{ stats.shortlisted }}</span>
+      <span class="hero-stat-label">Shortlisted</span>
+    </div>
+    <div class="hero-divider"></div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">{{ stats.interview }}</span>
+      <span class="hero-stat-label">Interview</span>
+    </div>
+  </div>
+</div>
+
 <div class="dashboard-grid">
   <div>
     <div class="search-bar-large">
@@ -102,10 +126,14 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
       </div>
     </div>
     {% endfor %}
-    <div style="text-align: center; margin-top: 8px">
+    <div style="text-align: center; margin-top: 14px">
       <a
         href="{{ url_for('candidate_jobs') }}"
-        style="color: var(--color-primary); font-weight: 600; font-size: 14px"
+        style="
+          color: var(--color-primary-dark);
+          font-weight: 600;
+          font-size: 13.5px;
+        "
         >View all jobs &rarr;</a
       >
     </div>
@@ -126,15 +154,17 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
         justify-content: space-between;
         gap: 16px;
         flex-wrap: wrap;
+        background: var(--ink);
+        border-color: var(--ink);
       "
     >
       <div style="display: flex; align-items: center; gap: 14px">
-        <span style="font-size: 24px">&#128196;</span>
+        <span style="font-size: 22px">&#128196;</span>
         <div>
-          <h3 style="margin: 0 0 2px">Let AI find better jobs for you</h3>
-          <p
-            style="margin: 0; font-size: 13.5px; color: var(--color-text-muted)"
-          >
+          <h3 style="margin: 0 0 3px; color: #fff">
+            Let AI find better jobs for you
+          </h3>
+          <p style="margin: 0; font-size: 13px; color: var(--stone-light)">
             Upload your resume and get AI-powered job recommendations.
           </p>
         </div>
@@ -159,7 +189,7 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
               cy="70"
               r="56"
               fill="none"
-              stroke="#eef0f4"
+              stroke="#eee9df"
               stroke-width="12"
             />
             <circle
@@ -167,7 +197,7 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
               cy="70"
               r="56"
               fill="none"
-              stroke="#4338ca"
+              stroke="#e2793d"
               stroke-width="12"
               stroke-dasharray="{{ circumference }}"
               stroke-dashoffset="{{ offset }}"
@@ -193,13 +223,31 @@ block title %}Candidate Dashboard - Anvesh AI{% endblock %} {% block page_title
         Improve your score by enhancing these skills
       </p>
       <div class="job-tags" style="margin-bottom: 16px">
-        <span class="tag" style="background: #ecfdf5; color: #16a34a"
+        <span
+          class="tag"
+          style="
+            background: var(--moss-bg);
+            color: var(--moss);
+            border-color: transparent;
+          "
           >Docker</span
         >
-        <span class="tag" style="background: #ecfdf5; color: #16a34a"
+        <span
+          class="tag"
+          style="
+            background: var(--moss-bg);
+            color: var(--moss);
+            border-color: transparent;
+          "
           >Kubernetes</span
         >
-        <span class="tag" style="background: #ecfdf5; color: #16a34a"
+        <span
+          class="tag"
+          style="
+            background: var(--moss-bg);
+            color: var(--moss);
+            border-color: transparent;
+          "
           >Redis</span
         >
       </div>
