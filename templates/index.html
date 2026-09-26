@@ -47,11 +47,27 @@ Perfect Candidate{% endblock %} {% block content %}
   .av-nav__brand {
     display: flex;
     align-items: center;
+    gap: 10px;
+    text-decoration: none;
   }
   .av-nav__brand img {
-    height: 38px;
+    height: 34px;
     width: auto;
     display: block;
+  }
+  .av-nav__brand-text {
+    font-family: "Sora", sans-serif;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.2px;
+    color: #ffffff;
+  }
+  .av-nav__brand-text em {
+    font-style: normal;
+    background: linear-gradient(90deg, #818cf8, #c4b5fd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .av-nav__links {
     display: flex;
@@ -803,9 +819,10 @@ Perfect Candidate{% endblock %} {% block content %}
   <nav class="av-nav">
     <a href="{{ url_for('index') }}" class="av-nav__brand">
       <img
-        src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
+        src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
         alt="Anvesh AI"
       />
+      <span class="av-nav__brand-text">Anvesh <em>AI</em></span>
     </a>
 
     <input type="checkbox" id="av-nav-toggle" class="av-nav__toggle" />
@@ -1208,11 +1225,29 @@ Perfect Candidate{% endblock %} {% block content %}
   <footer class="site-footer">
     <div class="footer-grid">
       <div class="footer-brand">
-        <img
-          src="{{ url_for('static', filename='images/anvesh-ai-logo.png') }}"
-          alt="Anvesh AI"
-          style="height: 34px; width: auto; margin-bottom: 10px"
-        />
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+          "
+        >
+          <img
+            src="{{ url_for('static', filename='images/anvesh-ai-icon.png') }}"
+            alt="Anvesh AI"
+            style="height: 30px; width: auto"
+          />
+          <span
+            style="
+              font-family: 'Sora', sans-serif;
+              font-weight: 700;
+              font-size: 18px;
+              color: #ffffff;
+            "
+            >Anvesh AI</span
+          >
+        </div>
         <p>AI Powered Recruitment Platform</p>
       </div>
       <div class="footer-col">
